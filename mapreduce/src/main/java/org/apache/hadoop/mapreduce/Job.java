@@ -58,6 +58,10 @@ public class Job {
 		conf.set(JAR_BY_CLASS, name.getName());
 	}
 	
+	public Configuration getConfiguration() {
+		return conf;
+	}
+	
 	public boolean waitForCompletion(boolean verbose) {
 		Master master = new Master(this);
 		return master.submit();

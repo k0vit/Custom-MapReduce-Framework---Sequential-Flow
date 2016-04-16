@@ -1,9 +1,11 @@
 package neu.edu.mapreduce;
 
+import java.io.PrintWriter;
+
 import org.apache.hadoop.mapreduce.Job;
 
 public class Master {
-	
+
 	Job job;
 
 	public Master(Job job) {
@@ -11,8 +13,6 @@ public class Master {
 	}
 
 	/**
-	 * download InstanceDetails.csv 
-	 * download cluster.properties
 	 * 
 	 * Read config
 	 * upload config
@@ -25,21 +25,24 @@ public class Master {
 	 * @return
 	 */
 	public boolean submit() {
-		
-		downloadInstanceDetailsFile();
-		downloadClusterProperties();
-		
-		
+
+		readConfiguration();
+
 		return true;
 	}
 
-	private void downloadClusterProperties() {
-		// TODO Auto-generated method stub
-		
-	}
-
-	private void downloadInstanceDetailsFile() {
-		// TODO Auto-generated method stub
-		
+	private void readConfiguration() {
+		try {
+			PrintWriter writer = new PrintWriter("Configuration.properties");
+			for (String key : job.getConfiguration().getMap().keySet()) {
+				StringBuilder sb = new StringBuilder(key)
+				.append("=").append(job.getConfiguration().get(key));
+				writer.println(sb.toString());
+			}
+			writer.close();
+		}
+		catch (Exception e) {
+			// TODO
+		}
 	}
 }
