@@ -11,10 +11,12 @@ public class Master {
 	}
 
 	/**
-	 * Read config
-	 * upload config
 	 * download InstanceDetails.csv 
 	 * download cluster.properties
+	 * 
+	 * Read config
+	 * upload config
+	 *
 	 * 
 	 * "/start" - for a new job 
 	 * 
@@ -24,7 +26,20 @@ public class Master {
 	 */
 	public boolean submit() {
 		
+		downloadInstanceDetailsFile();
+		downloadClusterProperties();
+		
 		
 		return true;
+	}
+
+	private void downloadClusterProperties() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	private void downloadInstanceDetailsFile() {
+		// TODO Auto-generated method stub
+		
 	}
 }

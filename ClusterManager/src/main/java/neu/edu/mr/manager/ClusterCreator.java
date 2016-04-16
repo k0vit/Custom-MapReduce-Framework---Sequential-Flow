@@ -82,7 +82,7 @@ public class ClusterCreator {
 			BufferedWriter bw = new BufferedWriter(fw);
 
 			LOGGER.log(Level.FINE, "Fetching instances for reservation id " + reservationId);
-			boolean clientNodeCreated = false;
+			boolean masterNodeCreated = false;
 			// checks the progress of cluster instnace creation
 			for (Reservation reservation: amazonEC2Client.describeInstances().getReservations()) {
 				if (reservation.getReservationId().equals(reservationId)) {
@@ -108,9 +108,9 @@ public class ClusterCreator {
 						instanceDetails.append(inst.getInstanceId()).append(",");
 						instanceDetails.append(inst.getPrivateIpAddress()).append(",");
 						instanceDetails.append(inst.getPublicIpAddress()).append(",");
-						if (!clientNodeCreated) {
-							instanceDetails.append('C').append(System.lineSeparator());
-							clientNodeCreated = true;
+						if (!masterNodeCreated) {
+							instanceDetails.append('M').append(System.lineSeparator());
+							masterNodeCreated = true;
 						}
 						else {
 							instanceDetails.append('S').append(System.lineSeparator());

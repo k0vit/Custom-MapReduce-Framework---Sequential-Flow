@@ -9,20 +9,18 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * action = create, terminate or start
+ * action = create, terminate
  * @author kovit
  *
  */
 public class Main {
 
-	public static final String keyName = "a9key";
-	public static final String securityGrpName = "a9securitygrp";
+	public static final String keyName = "finalprojkey";
+	public static final String securityGrpName = "finalprojsecuritygrp";
 	public static final String CLUSTER_MANAGER_LOGGER = "ClusterManager";
 	private final static Logger LOGGER = Logger.getLogger(CLUSTER_MANAGER_LOGGER);
 	public static final String CLUSTER_DETAILS_FILE_NAME = "InstanceDetails.csv";
 	public static final String EC2_KEY_FILE_NAME = "ec2key.pem";
-	public static final String CLIENT_JAR = "client-0.0.1-SNAPSHOT-jar-with-dependencies.jar";
-	public static final String SORT_NODE_JAR = "SortNode-0.0.1-SNAPSHOT-jar-with-dependencies.jar";
 	public static Logger logger; 
 
 	/**
@@ -49,11 +47,6 @@ public class Main {
 			LOGGER.log(Level.FINE, "Cluster terminated successfully: " + clusterTerminated);
 			boolean downloadOutput = terminator.downloadOutput(args[1]);
 			LOGGER.log(Level.FINE, "downloaded output successfully: " + downloadOutput);
-		}
-		else if (args[0].equalsIgnoreCase("start")) {
-			ClusterStarter starter = new ClusterStarter(params);
-			boolean uploadFile = starter.uploadToS3();
-			LOGGER.log(Level.FINE, "File uploaded successfully: " + uploadFile);
 		}
 		else {
 			System.err.println("Incorrect action " + args[0] + ". Action can either be [create] or [terminate]");
