@@ -1,0 +1,86 @@
+REQUIREMENTS:
+1. Makefile should be copied to the same directory too to make sure it runs perfectly.
+2. Edit the cluster.properties file as instructed below.
+3. With each of our runs we create a security group, a key-pair each time and they get deleted as the run is terminated. Incase the run fails check and delete the group and the key-pair manually or run make terminate.
+---------------------------------------------------------------------------------------------------------------------------------------------
+RUNNING PROGRAM WITH MAKE FILE:
+make dist_sort INPUT_PATH=<S3 Input Dir> OUTPUT_PATH=<S3 Output Dir>
+
+For e.g:
+make dist_sort INPUT_PATH=s3://cs6240sp16/climate OUTPUT_PATH=s3://naineel/outputa9 
+
+where:
+INPUT_PATH is the s3 dir location of history files in aws.
+OUTPUT_PATH is the dir location in aws s3 where all the output files will be for cloud run.
+---------------------------------------------------------------------------------------------------------------------------------------------
+Terminating the cluster:
+make terminate 
+
+Above command will terminate the ec2 instances, delete the Key-pair and security group.
+Don't worry about this showing in your console:
+OUTPUT_PATH: command not found.
+---------------------------------------------------------------------------------------------------------------------------------------------
+Cluster.properties:
+
+1. Add your AccessKey and SecretKey as shown after the = with no space.
+2. Don't change the base image.
+3. Keep the instance type you want as r3.xlarge, r3.2xlarge, m3.xlarge etc.
+4. InstanceNumber should be the number of instances you want to bring up. This number is essentially the number of slave machines only we add one more instance for the master node.
+5. Add the Bucket name as the base bucket of the OUTPUT_PATH so it will be s3://naineel in the above case.
+
+---------------------------------------------------------------------------------------------------------------------------------------------
+
+OUTPUT:
+The output is finally generated in the S3 output path which is given as argument to the Makefile as OUTPUT_PATH.
+It will create part-r-<0-Number>.csv where Number is the total slave machines - 1.
+ ---------------------------------------------------------------------------------------------------------------------------------------------
+
+LOGGING:
+We are logging our progress to the project folder. It will create separate files for each sortnode as sortnode-<ip-address>.txt by which you can follow the progress.
+
+The master which is the client will also have its own log as client-output.txt where we can follow the clients progress. ---------------------------------------------------------------------------------------------------------------------------------------------
+STEPS TO TAKE INCASE OF ERRORS:
+
+If you see something like this:
+./scpTo.sh
+ssh: connect to host 54.174.184.32 port 22: Connection refused
+lost connection
+
+Hit Ctrl + C. Wait for 10 seconds and manually run 
+./scpTo.sh
+
+This Step is successful if it shows the following output:
+Warning: Permanently added '52.90.113.222' (ECDSA) to the list of known hosts.
+client-0.0.1-SNAPSHOT-jar-with-dependencies.jar                                                                                                        100%   37MB   1.5MB/s   00:25    
+Warning: Permanently added '52.87.203.115' (ECDSA) to the list of known hosts.
+SortNode-0.0.1-SNAPSHOT-jar-with-dependencies.jar                                                                                                      100%   43MB   1.4MB/s   00:30    
+Warning: Permanently added '54.172.24.56' (ECDSA) to the list of known hosts.
+SortNode-0.0.1-SNAPSHOT-jar-with-dependencies.jar                                                                                                      100%   43MB   1.4MB/s   00:30    
+Warning: Permanently added '52.87.157.90' (ECDSA) to the list of known hosts.
+SortNode-0.0.1-SNAPSHOT-jar-with-dependencies.jar                                                                                                      100%   43MB   1.4MB/s   00:30    
+Warning: Permanently added '54.152.54.67' (ECDSA) to the list of known hosts.
+SortNode-0.0.1-SNAPSHOT-jar-with-dependencies.jar                               
+
+Then you will have to run the ./sshToRun script manually if above step fails as:
+./sshToRun.sh s3://cs6240sp16/climate s3://naineel/outputa9
+
+which will give an output like this:
+<AWS ACCESS KEY>
+<AWS SECRET KEY>
+s3://naineel/InstanceDetails.csv
+Warning: Permanently added '54.152.120.0' (ECDSA) to the list of known hosts.
+Warning: Permanently added '54.165.203.81' (ECDSA) to the list of known hosts.
+Warning: Permanently added '52.207.221.32' (ECDSA) to the list of known hosts.
+Warning: Permanently added '54.165.2.164' (ECDSA) to the list of known hosts.
+Warning: Permanently added '52.87.241.254' (ECDSA) to the list of known hosts.
+
+This means now your program is running on the ec2 instances and it should form the log files.
+---------------------------------------------------------------------------------------------------------------------------------------------
+TROUBLESHOOTING:
+
+Please mail if there are issue while executing the program. 
+nisar.k@husky.neu.edu 
+shah.nai@husky.neu.edu
+yuanjian.lai@gmail.com 
+
+---------------------------------------------------------------------------------------------------------------------------------------------
