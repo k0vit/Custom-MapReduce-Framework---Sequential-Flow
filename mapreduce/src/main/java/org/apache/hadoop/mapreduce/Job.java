@@ -11,6 +11,8 @@ import static org.apache.hadoop.Constants.JobConstants.REDUCER_CLASS;
 
 import org.apache.hadoop.conf.Configuration;
 
+import neu.edu.mapreduce.Master;
+
 public class Job {
 
 	private Configuration conf;
@@ -57,7 +59,7 @@ public class Job {
 	}
 	
 	public boolean waitForCompletion(boolean verbose) {
-		// TODO
-		return false;
+		Master master = new Master(this);
+		return master.submit();
 	}
 }
