@@ -1,4 +1,4 @@
-package neu.edu.mapreduce;
+package neu.edu.mapreduce.slave;
 
 /**
  * download cluster.properties

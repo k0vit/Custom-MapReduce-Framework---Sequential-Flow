@@ -1,4 +1,4 @@
-package neu.edu.mapreduce;
+package neu.edu.mapreduce.master;
 
 import java.io.PrintWriter;
 

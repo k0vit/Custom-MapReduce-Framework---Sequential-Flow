@@ -11,7 +11,7 @@ import static org.apache.hadoop.Constants.JobConstants.REDUCER_CLASS;
 
 import org.apache.hadoop.conf.Configuration;
 
-import neu.edu.mapreduce.Master;
+import neu.edu.mapreduce.master.Master;
 
 public class Job {
 
