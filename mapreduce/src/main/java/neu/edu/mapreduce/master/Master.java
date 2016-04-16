@@ -1,5 +1,6 @@
 package neu.edu.mapreduce.master;
 
+import java.io.File;
 import java.io.PrintWriter;
 import java.util.List;
 import java.util.Properties;
@@ -44,14 +45,8 @@ public class Master {
 		uploadConfiguration();
 	}
 
-	private void uploadConfiguration() {
-		// TODO Auto-generated method stub
-		
-	}
-
 	private void readInstanceDetails() {
-		// TODO Auto-generated method stub
-		
+		File instanceDetails = new File("");
 	}
 
 	private void readClusterProperties() {
@@ -73,4 +68,10 @@ public class Master {
 			// TODO
 		}
 	}
+	
+	private void uploadConfiguration() {
+		// TODO Auto-generated method stub
+		
+	}
+
 }
