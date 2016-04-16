@@ -1,5 +1,6 @@
 package org.apache.hadoop.mapreduce;
 
+import static org.apache.hadoop.Constants.JobConstants.JAR_BY_CLASS;
 import static org.apache.hadoop.Constants.JobConstants.JOB_NAME;
 import static org.apache.hadoop.Constants.JobConstants.MAPPER_CLASS;
 import static org.apache.hadoop.Constants.JobConstants.MAP_OUTPUT_KEY_CLASS;
@@ -19,7 +20,7 @@ public class Job {
 		conf.set(JOB_NAME, jobName);
 	}
 	
-	public Job getInstance(Configuration conf, String jobName) {
+	public static Job getInstance(Configuration conf, String jobName) {
 		return new Job(conf, jobName); 
 	}
 	
@@ -54,5 +55,9 @@ public class Job {
 	public boolean waitForCompletion(boolean verbose) {
 		// TODO
 		return false;
+	}
+
+	public void setJarByClass(Class<?> name) {
+		conf.set(JAR_BY_CLASS, name.getName());
 	}
 }

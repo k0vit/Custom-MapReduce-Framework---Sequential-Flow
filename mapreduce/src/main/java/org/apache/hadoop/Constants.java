@@ -11,5 +11,6 @@ public class Constants {
 		public static final String MAP_OUTPUT_VALUE_CLASS = "mapOutputValueClass";
 		public static final String INPUT_PATH = "inputPath";
 		public static final String OUTPUT_PATH = "outputPath";
+		public static final String JAR_BY_CLASS = "jarByClass";
 	}
 }

@@ -8,6 +8,10 @@ public class Text {
 		this.value = value;
 	}
 	
+	public Text(Text key) {
+		this.value = key.get();
+	}
+
 	@Override
 	public String toString() {
 		return value;

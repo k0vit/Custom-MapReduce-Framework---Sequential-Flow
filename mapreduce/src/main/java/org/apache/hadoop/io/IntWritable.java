@@ -15,4 +15,8 @@ public class IntWritable {
 	public int get() {
 		return this.value;
 	}
+
+	public void increment(int i) {
+		// TODO 
+	}
 }
