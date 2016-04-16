@@ -9,5 +9,7 @@ public class Constants {
 		public static final String OUTPUT_VALUE_CLASS = "outputValueClass";
 		public static final String MAP_OUTPUT_KEY_CLASS = "mapOutputKeyClass";
 		public static final String MAP_OUTPUT_VALUE_CLASS = "mapOutputValueClass";
+		public static final String INPUT_PATH = "inputPath";
+		public static final String OUTPUT_PATH = "outputPath";
 	}
 }

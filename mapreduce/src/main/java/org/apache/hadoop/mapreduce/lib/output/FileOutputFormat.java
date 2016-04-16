@@ -1,5 +1,13 @@
 package org.apache.hadoop.mapreduce.lib.output;
 
-public class FileOutputFormat {
+import static org.apache.hadoop.Constants.JobConstants.OUTPUT_PATH;
 
+import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.mapreduce.Job;;
+
+public class FileOutputFormat {
+	
+	public static void setOutputPath(Job job, Path path) {
+		job.set(OUTPUT_PATH, path.get());
+	}
 }

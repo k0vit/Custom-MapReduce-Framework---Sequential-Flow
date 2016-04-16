@@ -47,6 +47,10 @@ public class Job {
 		conf.set(MAP_OUTPUT_VALUE_CLASS, name.getName());
 	}
 	
+	public void set(String key, String value) {
+		conf.set(key, value);
+	}
+	
 	public boolean waitForCompletion(boolean verbose) {
 		// TODO
 		return false;
