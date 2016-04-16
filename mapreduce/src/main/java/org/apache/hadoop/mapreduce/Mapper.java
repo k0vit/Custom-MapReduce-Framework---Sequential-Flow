@@ -2,27 +2,13 @@ package org.apache.hadoop.mapreduce;
 
 import java.io.IOException;
 
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.io.IntWritable;
-
 public class Mapper<KEYIN, VALUEIN, KEYOUT, VALUEOUT> {
 
-	public class Context implements IContext<KEYIN,VALUEIN,KEYOUT,VALUEOUT> {
-
+	public class Context extends BaseContext<KEYIN, VALUEIN, KEYOUT, VALUEOUT> {
+		
 		@Override
 		public void write(KEYOUT key, VALUEOUT value) {
 			// TODO Auto-generated method stub
-
-		}
-
-		public IntWritable getCounter(String string, String uniqueCarrier) {
-			// TODO 
-			return null;
-		}
-		
-		public Configuration getConfiguration() {
-			// TODO
-			return null;
 		}
 	}
 

@@ -52,12 +52,12 @@ public class Job {
 		conf.set(key, value);
 	}
 	
+	public void setJarByClass(Class<?> name) {
+		conf.set(JAR_BY_CLASS, name.getName());
+	}
+	
 	public boolean waitForCompletion(boolean verbose) {
 		// TODO
 		return false;
-	}
-
-	public void setJarByClass(Class<?> name) {
-		conf.set(JAR_BY_CLASS, name.getName());
 	}
 }

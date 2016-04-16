@@ -16,7 +16,8 @@ public class IntWritable {
 		return this.value;
 	}
 
-	public void increment(int i) {
-		// TODO 
+	public synchronized IntWritable increment(int i) {
+		this.value += i;
+		return this;
 	}
 }

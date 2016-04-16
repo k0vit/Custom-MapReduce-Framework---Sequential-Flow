@@ -8,7 +8,7 @@ public class Configuration {
 	private Map<String, String> properties;
 
 	public Configuration() {
-		properties = new HashMap<String, String>(5);
+		properties = new HashMap<String, String>(10);
 	}
 
 	public void set(String key, String value) {
