@@ -1,12 +1,18 @@
 package neu.edu.mapreduce.master;
 
 import java.io.PrintWriter;
+import java.util.List;
+import java.util.Properties;
 
 import org.apache.hadoop.mapreduce.Job;
 
+import neu.edu.mapreduce.common.Node;
+
 public class Master {
 
-	Job job;
+	private Job job;
+	private Properties clusterProperties;
+	private List<Node> slaves;
 
 	public Master(Job job) {
 		this.job = job;
@@ -26,9 +32,31 @@ public class Master {
 	 */
 	public boolean submit() {
 
-		readConfiguration();
+		setup();
 
 		return true;
+	}
+
+	private void setup() {
+		readClusterProperties();
+		readInstanceDetails();
+		readConfiguration();
+		uploadConfiguration();
+	}
+
+	private void uploadConfiguration() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	private void readInstanceDetails() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	private void readClusterProperties() {
+		// TODO Auto-generated method stub
+		
 	}
 
 	private void readConfiguration() {
