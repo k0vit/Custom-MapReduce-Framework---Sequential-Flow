@@ -15,4 +15,9 @@ public class FloatWritable {
 	public float get() {
 		return this.value;
 	}
+	
+	@Override
+	public String toString() {
+		return String.valueOf(value);
+	}
 }

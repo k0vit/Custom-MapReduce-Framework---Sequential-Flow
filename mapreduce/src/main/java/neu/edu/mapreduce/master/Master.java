@@ -31,7 +31,6 @@ public class Master {
 	 * 
 	 * Read job configuration 
 	 * Upload configuration file to s3 at Bucket\Configuration.properties
-	 *
 	 * 
 	 * "/start" - for a new job 
 	 * 
@@ -59,7 +58,7 @@ public class Master {
 			PrintWriter writer = new PrintWriter(JOB_CONF_PROP_FILE_NAME);
 			for (String key : job.getConfiguration().getMap().keySet()) {
 				StringBuilder sb = new StringBuilder(key)
-				.append("=").append(job.getConfiguration().get(key));
+						.append("=").append(job.getConfiguration().get(key));
 				writer.println(sb.toString());
 			}
 			writer.close();

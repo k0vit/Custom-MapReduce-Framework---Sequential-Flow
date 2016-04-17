@@ -1,7 +1,7 @@
 package org.apache.hadoop;
 
 public class Constants {
-	public static class JobConstants {
+	public static class JobConf {
 		public static final String JOB_NAME = "JobName";
 		public static final String MAPPER_CLASS = "MapperClass";
 		public static final String REDUCER_CLASS = "ReducerClass";
@@ -12,6 +12,8 @@ public class Constants {
 		public static final String INPUT_PATH = "InputPath";
 		public static final String OUTPUT_PATH = "OutputPath";
 		public static final String JAR_BY_CLASS = "JarByClass";
+		public static final String MAPPER_INPUT_KEY_CLASS = "MapperInputKeyClass";
+		public static final String MAPPER_INPUT_VALUE_CLASS = "MapperInputValueClass";
 	}
 	
 	public static class FileNames {

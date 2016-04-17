@@ -1,6 +1,6 @@
 package org.apache.hadoop.mapreduce.lib.input;
 
-import static org.apache.hadoop.Constants.JobConstants.INPUT_PATH;
+import static org.apache.hadoop.Constants.JobConf.INPUT_PATH;
 
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapreduce.Job;

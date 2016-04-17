@@ -1,15 +1,20 @@
 package org.apache.hadoop.mapreduce;
 
-import static org.apache.hadoop.Constants.JobConstants.JAR_BY_CLASS;
-import static org.apache.hadoop.Constants.JobConstants.JOB_NAME;
-import static org.apache.hadoop.Constants.JobConstants.MAPPER_CLASS;
-import static org.apache.hadoop.Constants.JobConstants.MAP_OUTPUT_KEY_CLASS;
-import static org.apache.hadoop.Constants.JobConstants.MAP_OUTPUT_VALUE_CLASS;
-import static org.apache.hadoop.Constants.JobConstants.OUTPUT_KEY_CLASS;
-import static org.apache.hadoop.Constants.JobConstants.OUTPUT_VALUE_CLASS;
-import static org.apache.hadoop.Constants.JobConstants.REDUCER_CLASS;
+import static org.apache.hadoop.Constants.JobConf.JAR_BY_CLASS;
+import static org.apache.hadoop.Constants.JobConf.JOB_NAME;
+import static org.apache.hadoop.Constants.JobConf.MAPPER_CLASS;
+import static org.apache.hadoop.Constants.JobConf.MAPPER_INPUT_KEY_CLASS;
+import static org.apache.hadoop.Constants.JobConf.MAPPER_INPUT_VALUE_CLASS;
+import static org.apache.hadoop.Constants.JobConf.MAP_OUTPUT_KEY_CLASS;
+import static org.apache.hadoop.Constants.JobConf.MAP_OUTPUT_VALUE_CLASS;
+import static org.apache.hadoop.Constants.JobConf.OUTPUT_KEY_CLASS;
+import static org.apache.hadoop.Constants.JobConf.OUTPUT_VALUE_CLASS;
+import static org.apache.hadoop.Constants.JobConf.REDUCER_CLASS;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.io.LongWritable;
+
+import com.sun.xml.internal.ws.policy.privateutil.PolicyUtils.Text;
 
 import neu.edu.mapreduce.master.Master;
 
@@ -23,7 +28,14 @@ public class Job {
 	}
 	
 	public static Job getInstance(Configuration conf, String jobName) {
-		return new Job(conf, jobName); 
+		Job job = new Job(conf, jobName);
+		conf.set(OUTPUT_KEY_CLASS, Text.class.getName());
+		conf.set(OUTPUT_VALUE_CLASS, Text.class.getName());
+		conf.set(MAP_OUTPUT_KEY_CLASS, Text.class.getName());
+		conf.set(MAP_OUTPUT_VALUE_CLASS, Text.class.getName());
+		conf.set(MAPPER_INPUT_KEY_CLASS, LongWritable.class.getName());
+		conf.set(MAPPER_INPUT_VALUE_CLASS, Text.class.getName());
+		return job;
 	}
 	
 	public void setMapperClass(Class<?> name) {

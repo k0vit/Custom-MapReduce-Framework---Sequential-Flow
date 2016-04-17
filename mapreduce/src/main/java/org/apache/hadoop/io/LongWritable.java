@@ -15,4 +15,9 @@ public class LongWritable {
 	public long get() {
 		return this.value;
 	}
+	
+	@Override
+	public String toString() {
+		return String.valueOf(value);
+	}
 }

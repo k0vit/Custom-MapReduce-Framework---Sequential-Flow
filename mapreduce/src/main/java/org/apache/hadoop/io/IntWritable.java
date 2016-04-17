@@ -20,4 +20,9 @@ public class IntWritable {
 		this.value += i;
 		return this;
 	}
+	
+	@Override
+	public String toString() {
+		return String.valueOf(value);
+	}
 }

@@ -1,6 +1,6 @@
 package org.apache.hadoop.mapreduce.lib.output;
 
-import static org.apache.hadoop.Constants.JobConstants.OUTPUT_PATH;
+import static org.apache.hadoop.Constants.JobConf.OUTPUT_PATH;
 
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapreduce.Job;;
