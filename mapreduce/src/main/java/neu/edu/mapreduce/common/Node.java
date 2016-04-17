@@ -34,5 +34,4 @@ public class Node {
 		return "Node [privateIp=" + privateIp + ", publicIp=" + publicIp
 				+ ", isSlave=" + isSlave + ", id=" + id + "]";
 	}
-	
 }

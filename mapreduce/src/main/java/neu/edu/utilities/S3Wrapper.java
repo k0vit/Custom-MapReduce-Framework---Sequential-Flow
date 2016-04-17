@@ -111,20 +111,19 @@ public class S3Wrapper {
 	 * 
 	 * @param file
 	 *            File to be uploaded.
-	 * @param s3OutputPath
-	 *            Path to be uploaded to.
+	 * @param bucket
+	 *            bucket name e.g. s3://kovit
 	 * @return true if uploaded successfully.
 	 */
-	public boolean uploadFile(String file, String s3OutputPath) {
+	public boolean uploadFile(String file, String bucket) {
 		File local = new File(file);
 		if (!(local.exists() && local.canRead() && local.isFile())) {
 			return false;
 		}
-		String folder = removeS3(s3OutputPath);
-		String bucket = folder;
+		String folder = removeS3(bucket);
 		String remote = local.getName();
 		try {
-			s3client.putObject(new PutObjectRequest(bucket, remote, local));
+			s3client.putObject(new PutObjectRequest(folder, remote, local));
 		} catch (Exception e) {
 			log.severe("Failed to upload file: " + local.getName() + " :" + e.getMessage());
 		}

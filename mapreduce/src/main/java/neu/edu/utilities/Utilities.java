@@ -1,5 +1,8 @@
 package neu.edu.utilities;
 
+import static org.apache.hadoop.Constants.FileNames.CLUSTER_PROP_FILE_NAME;
+import static org.apache.hadoop.Constants.FileNames.INSTANCE_DETAILS_FILE_NAME;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
@@ -10,7 +13,6 @@ import java.util.List;
 import java.util.Properties;
 
 import neu.edu.mapreduce.common.Node;
-
 public class Utilities {
 
 	private Utilities() {};
@@ -18,7 +20,7 @@ public class Utilities {
 	public static List<Node> readInstanceDetails() {
 		List<Node> nodeLst = new ArrayList<>(10);
 		try { 
-			File instanceDetails = new File("InstanceDetails.csv");
+			File instanceDetails = new File(INSTANCE_DETAILS_FILE_NAME);
 			BufferedReader br = new BufferedReader(new FileReader(instanceDetails));
 			String line = null;
 			while ((line = br.readLine()) != null) {
@@ -38,8 +40,9 @@ public class Utilities {
 		Properties prop = new Properties();
 		InputStream input = null;
 		try {
-			input = new FileInputStream("cluster.properties");
+			input = new FileInputStream(CLUSTER_PROP_FILE_NAME);
 			prop.load(input);
+			input.close();
 		}
 		catch (Exception e) {
 			// TODO
