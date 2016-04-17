@@ -1,11 +1,14 @@
 package neu.edu.mapreduce.master;
 
 import static org.apache.hadoop.Constants.ClusterProperties.BUCKET;
+import static org.apache.hadoop.Constants.CommProperties.FILE_URL;
 import static org.apache.hadoop.Constants.CommProperties.START_JOB_URL;
 import static org.apache.hadoop.Constants.FileNames.JOB_CONF_PROP_FILE_NAME;
 import static org.apache.hadoop.Constants.JobConf.INPUT_PATH;
 
 import java.io.PrintWriter;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
 
@@ -105,13 +108,62 @@ public class Master {
 			}
 		}
 	}
-	
+
 	private void sendFilesToMapper() {
 		List<S3File> s3Files = s3wrapper.getListOfObjects(job.getConfiguration().get(INPUT_PATH));
+		Collections.sort(s3Files);
+
+		List<NodeToFile> nodeToFile = new ArrayList<>(nodes.size()); 
+		for (Node node : nodes) {
+			nodeToFile.add(new NodeToFile(node));
+		}
+
 		for (S3File file : s3Files) {
 			if (file.getFileName().endsWith(".gz")) {
-				
+				nodeToFile.get(0).addToFileNameLst(file.getFileName());
+				nodeToFile.get(0).addToTotalSize(file.getSize());
 			}
+			Collections.sort(nodeToFile);
 		}
+
+		for (NodeToFile node : nodeToFile) {
+			NodeCommWrapper.sendData(node.getNode().getPrivateIp(), FILE_URL, node.getFileNameLst());
+		}
+	}
+}
+
+class NodeToFile implements Comparable<NodeToFile>{
+	private Node node;
+	private Long totalSize = new Long(0);
+	private StringBuilder fileNameLst = new StringBuilder();
+
+	public NodeToFile(Node node) {
+		this.node = node;
+	}
+
+	public Node getNode() {
+		return node;
+	}
+
+	public Long getTotalSize() {
+		return totalSize;
+	}
+
+	public void addToTotalSize(Long totalSize) {
+		this.totalSize += totalSize;
+	}
+
+	public String getFileNameLst() {
+		fileNameLst.deleteCharAt(fileNameLst.length() - 1);
+		return fileNameLst.toString();
+	}
+
+	public void addToFileNameLst(String fileName) {
+		fileNameLst.append(fileName).append(",");
+	}
+
+	@Override
+	public int compareTo(NodeToFile o) {
+		return totalSize.compareTo(o.getTotalSize());
 	}
 }

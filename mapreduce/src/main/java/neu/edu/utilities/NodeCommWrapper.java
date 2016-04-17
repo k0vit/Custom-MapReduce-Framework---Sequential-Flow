@@ -17,6 +17,10 @@ public class NodeCommWrapper {
 	public static void sendData(String nodeIp, String requestUrl) {
 		sendData(nodeIp, DEFAULT_PORT, requestUrl, DEFAULT_DATA);
 	}
+	
+	public static void sendData(String nodeIp, String requestUrl, String data) {
+		sendData(nodeIp, DEFAULT_PORT, requestUrl, data);
+	}
 
 	public static void sendData(String nodeIp, String port, String requestUrl, String data) {
 		String address = "http://" + nodeIp + ":" + port + "/" + requestUrl;

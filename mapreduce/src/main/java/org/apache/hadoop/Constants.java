@@ -32,6 +32,7 @@ public class Constants {
 		public static final String EOM_URL = "/EOM";
 		public static final String EOR_URL = "/EOR";
 		public static final String START_JOB_URL = "/StartJob";
+		public static final String FILE_URL = "/File";
 		public static final String DEFAULT_PORT = "4567";
 		public static final String DEFAULT_DATA = "";
 	}

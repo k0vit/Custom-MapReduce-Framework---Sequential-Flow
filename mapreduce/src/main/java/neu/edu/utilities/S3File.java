@@ -26,6 +26,6 @@ public class S3File implements Comparable<S3File>{
 
 	@Override
 	public int compareTo(S3File o) {
-		return this.size.compareTo(o.size);
+		return this.size.compareTo(o.getSize());
 	}
 }
