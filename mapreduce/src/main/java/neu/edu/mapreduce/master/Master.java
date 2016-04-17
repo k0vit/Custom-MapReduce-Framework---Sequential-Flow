@@ -1,16 +1,20 @@
 package neu.edu.mapreduce.master;
 
 import static org.apache.hadoop.Constants.ClusterProperties.BUCKET;
+import static org.apache.hadoop.Constants.CommProperties.EOM_URL;
 import static org.apache.hadoop.Constants.CommProperties.FILE_URL;
 import static org.apache.hadoop.Constants.CommProperties.START_JOB_URL;
 import static org.apache.hadoop.Constants.FileNames.JOB_CONF_PROP_FILE_NAME;
 import static org.apache.hadoop.Constants.JobConf.INPUT_PATH;
+import static spark.Spark.post;
 
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.logging.Logger;
 
 import org.apache.hadoop.mapreduce.Job;
 
@@ -25,10 +29,14 @@ import neu.edu.utilities.Utilities;
 
 public class Master {
 
+	private static final Logger log = Logger.getLogger(Master.class.getName());
 	private Job job;
 	private Properties clusterProperties;
 	private List<Node> nodes;
 	private S3Wrapper s3wrapper;
+	private int slaveCount = 0;
+	
+	private static AtomicInteger noOfMapperDone = new AtomicInteger(0); 
 
 	public Master(Job job) {
 		this.job = job;
@@ -77,6 +85,9 @@ public class Master {
 		return true;
 	}
 
+	/**
+	 * Step 1
+	 */
 	private void setup() {
 		clusterProperties = Utilities.readClusterProperties();
 		s3wrapper = new S3Wrapper(new AmazonS3Client(new BasicAWSCredentials
@@ -101,14 +112,21 @@ public class Master {
 		}
 	}
 
+	/**
+	 * Step 2
+	 */
 	private void startJob() {
 		for (Node node: nodes) {
 			if (node.isSlave()) {
 				NodeCommWrapper.sendData(node.getPrivateIp(), START_JOB_URL);
+				slaveCount++;
 			}
 		}
 	}
 
+	/**
+	 * Step 3
+	 */
 	private void sendFilesToMapper() {
 		List<S3File> s3Files = s3wrapper.getListOfObjects(job.getConfiguration().get(INPUT_PATH));
 		Collections.sort(s3Files);
@@ -128,6 +146,23 @@ public class Master {
 
 		for (NodeToFile node : nodeToFile) {
 			NodeCommWrapper.sendData(node.getNode().getPrivateIp(), FILE_URL, node.getFileNameLst());
+		}
+	}
+	
+	private void listenToEndOfMapper() {
+		post(EOM_URL, (request, response) -> {
+			response.status(200);
+			response.body("SUCCESS");
+			noOfMapperDone.incrementAndGet();
+			return response.body().toString();
+		});
+		
+		while (noOfMapperDone.get() != slaveCount) {
+			try {
+				Thread.sleep(30000);
+			} catch (InterruptedException e) {
+				// TODO
+			}
 		}
 	}
 }
