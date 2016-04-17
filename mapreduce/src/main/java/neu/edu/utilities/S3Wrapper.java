@@ -257,23 +257,3 @@ public class S3Wrapper {
 	private AmazonS3 s3client;
 
 }
-
-class S3File {
-	private String file;
-	private long size;
-	public String getFileName() {
-		return file;
-	}
-	public long getSize() {
-		return size;
-	}
-	public S3File(String file, long size) {
-		super();
-		this.file = file;
-		this.size = size;
-	}
-	@Override
-	public String toString() {
-		return "S3File [file=" + file + ", size=" + size + "]";
-	}
-}

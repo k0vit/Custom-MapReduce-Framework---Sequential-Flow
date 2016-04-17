@@ -3,6 +3,7 @@ package neu.edu.mapreduce.master;
 import static org.apache.hadoop.Constants.ClusterProperties.BUCKET;
 import static org.apache.hadoop.Constants.CommProperties.START_JOB_URL;
 import static org.apache.hadoop.Constants.FileNames.JOB_CONF_PROP_FILE_NAME;
+import static org.apache.hadoop.Constants.JobConf.INPUT_PATH;
 
 import java.io.PrintWriter;
 import java.util.List;
@@ -15,6 +16,7 @@ import com.amazonaws.services.s3.AmazonS3Client;
 
 import neu.edu.mapreduce.common.Node;
 import neu.edu.utilities.NodeCommWrapper;
+import neu.edu.utilities.S3File;
 import neu.edu.utilities.S3Wrapper;
 import neu.edu.utilities.Utilities;
 
@@ -105,6 +107,11 @@ public class Master {
 	}
 	
 	private void sendFilesToMapper() {
-		
+		List<S3File> s3Files = s3wrapper.getListOfObjects(job.getConfiguration().get(INPUT_PATH));
+		for (S3File file : s3Files) {
+			if (file.getFileName().endsWith(".gz")) {
+				
+			}
+		}
 	}
 }
