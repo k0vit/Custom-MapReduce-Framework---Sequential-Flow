@@ -88,7 +88,7 @@ public class S3Wrapper {
 	 * @param filename
 	 * @return
 	 */
-	public String readOutputFromS3(String outputPath, BasicAWSCredentials cred, String filename) {
+	public static String readOutputFromS3(String outputPath, BasicAWSCredentials cred, String filename) {
 		TransferManager tx = new TransferManager(cred);
 		String simplifiedPath = (outputPath.replace("s3://", ""));
 		int index = simplifiedPath.indexOf("/");
@@ -203,7 +203,7 @@ public class S3Wrapper {
 	 * @param inputS3Path
 	 * @return
 	 */
-	public String downloadAndStoreFileInLocal(String fileString, BasicAWSCredentials awsCredentials,
+	public static String downloadAndStoreFileInLocal(String fileString, BasicAWSCredentials awsCredentials,
 			String inputS3Path) {
 		String s3FullPath = inputS3Path + "/" + fileString;
 		log.info(String.format("[%s] Downloading from s3 full path: %s", fileString, s3FullPath));
