@@ -1,6 +1,7 @@
 package neu.edu.mapreduce.master;
 
 import static org.apache.hadoop.Constants.ClusterProperties.BUCKET;
+import static org.apache.hadoop.Constants.CommProperties.START_JOB_URL;
 import static org.apache.hadoop.Constants.FileNames.JOB_CONF_PROP_FILE_NAME;
 
 import java.io.PrintWriter;
@@ -13,6 +14,7 @@ import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.services.s3.AmazonS3Client;
 
 import neu.edu.mapreduce.common.Node;
+import neu.edu.utilities.NodeCommWrapper;
 import neu.edu.utilities.S3Wrapper;
 import neu.edu.utilities.Utilities;
 
@@ -28,19 +30,44 @@ public class Master {
 	}
 
 	/**
+	 * Master working:-
 	 * 
+	 * 1) 
+	 * Read instancedetails.csv and cluster.properties
 	 * Read job configuration 
 	 * Upload configuration file to s3 at Bucket\Configuration.properties
 	 * 
-	 * "/start" - for a new job 
+	 * 2) 
+	 * "/start" - for a new job (supporting multiple jobs)
 	 * 
-	 * get the Input path and read the files and divide by slaves
-	 *
-	 * @return
+	 * 3) 
+	 * Get the Input path and read the files and divide by #slaves or file size
+	 * send the files on /files
+	 * 
+	 * 4)
+	 * listen to /EOM meaning end of mapper
+	 *  
+	 * 5)
+	 * check if all mapper are done
+	 * once all mapper are done download keys from s3
+	 * divide keys by #slaves or key file size
+	 * send keys on /keys to mapper
+	 * 
+	 * 6)
+	 * listen to /EOR mean end of reducer
+	 * once all reducer are done return true
+	 * 
+	 * @return 
+	 * 		true if job completed successfully else false
 	 */
 	public boolean submit() {
 
 		setup();
+		startJob();
+		sendFilesToMapper();
+		listenToEndOfMapper();
+		sendKeysToReducer();
+		listenToEndOfReducer();
 
 		return true;
 	}
@@ -66,6 +93,14 @@ public class Master {
 		}
 		catch (Exception e) {
 			// TODO
+		}
+	}
+
+	private void startJob() {
+		for (Node node: nodes) {
+			if (node.isSlave()) {
+				NodeCommWrapper.sendData(node.getPrivateIp(), START_JOB_URL);
+			}
 		}
 	}
 }

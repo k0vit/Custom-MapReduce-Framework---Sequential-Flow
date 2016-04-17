@@ -142,7 +142,7 @@ public class Slave {
 			}
 
 			log.info("All files done..Sending end of mapper to Master");
-			NodeCommWrapper.SendData(MASTER_IP, port, endOfMap, "DONE");
+			NodeCommWrapper.sendData(MASTER_IP, port, endOfMap, "DONE");
 			response.status(200);
 			response.body("SUCCESS");
 			return response.body().toString();
@@ -173,7 +173,7 @@ public class Slave {
 		});
 
 		log.info("All files done..Sending end of reducer to Master");
-		NodeCommWrapper.SendData(MASTER_IP, port, endOfReducer, "DONE");
+		NodeCommWrapper.sendData(MASTER_IP, port, endOfReducer, "DONE");
 	}
 
 	private static void downloadBucketIntoLocal(String key) {
