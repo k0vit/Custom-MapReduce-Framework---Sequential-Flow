@@ -19,7 +19,7 @@ public class Main {
 	public static final String securityGrpName = "finalprojsecuritygrp";
 	public static final String CLUSTER_MANAGER_LOGGER = "ClusterManager";
 	private final static Logger LOGGER = Logger.getLogger(CLUSTER_MANAGER_LOGGER);
-	public static final String CLUSTER_DETAILS_FILE_NAME = "InstanceDetails.csv";
+	public static final String CLUSTER_DETAILS_FILE_NAME = "instancedetails.csv";
 	public static final String EC2_KEY_FILE_NAME = "ec2key.pem";
 	public static Logger logger; 
 
