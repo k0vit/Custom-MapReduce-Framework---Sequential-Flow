@@ -20,6 +20,8 @@ public class Constants {
 		public static final String JOB_CONF_PROP_FILE_NAME = "configuration.properties";
 		public static final String CLUSTER_PROP_FILE_NAME = "cluster.properties";
 		public static final String INSTANCE_DETAILS_FILE_NAME = "instancedetails.csv";
+		public static final String KEY_DIR_SUFFIX = "_key_dir/";
+		public static final String MAPPER_OP_DIR = "/OutputOfMapper";
 	}
 
 	public static class ClusterProperties {

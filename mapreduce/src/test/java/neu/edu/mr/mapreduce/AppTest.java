@@ -9,9 +9,14 @@ import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.Reducer;
 
+import com.amazonaws.auth.BasicAWSCredentials;
+import com.amazonaws.services.s3.AmazonS3Client;
+
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
+import neu.edu.utilities.S3File;
+import neu.edu.utilities.S3Wrapper;
 
 /**
  * Unit test for simple App.
@@ -35,6 +40,14 @@ extends TestCase
 	public static Test suite()
 	{
 		return new TestSuite( AppTest.class );
+	}
+	
+	public void testListObjects() {
+		S3Wrapper s = new S3Wrapper(new AmazonS3Client(new BasicAWSCredentials
+				("AKIAJNNJKLOMJRHGRMOA", "gvfoLO/iAo88Et6iPY3FqqercaF2P7wqRIeMcezh")));
+		
+		List<S3File> file = s.getListOfObjects("kovit", "test/2_key_dir");
+		System.out.println(file);
 	}
 
 	/**

@@ -2,10 +2,13 @@ package neu.edu.mapreduce.master;
 
 import static org.apache.hadoop.Constants.ClusterProperties.BUCKET;
 import static org.apache.hadoop.Constants.CommProperties.EOM_URL;
+import static org.apache.hadoop.Constants.CommProperties.EOR_URL;
 import static org.apache.hadoop.Constants.CommProperties.FILE_URL;
 import static org.apache.hadoop.Constants.CommProperties.START_JOB_URL;
 import static org.apache.hadoop.Constants.FileNames.JOB_CONF_PROP_FILE_NAME;
+import static org.apache.hadoop.Constants.FileNames.MAPPER_OP_DIR;
 import static org.apache.hadoop.Constants.JobConf.INPUT_PATH;
+import static org.apache.hadoop.Constants.JobConf.OUTPUT_PATH;
 import static spark.Spark.post;
 
 import java.io.PrintWriter;
@@ -36,7 +39,7 @@ public class Master {
 	private S3Wrapper s3wrapper;
 	private int slaveCount = 0;
 	
-	private static AtomicInteger noOfMapperDone = new AtomicInteger(0); 
+	private static AtomicInteger noOfMapReduceDone = new AtomicInteger(0); 
 
 	public Master(Job job) {
 		this.job = job;
@@ -78,9 +81,9 @@ public class Master {
 		setup();
 		startJob();
 		sendFilesToMapper();
-		listenToEndOfMapper();
+		listenToEndOfMapReduce(EOM_URL);
 		sendKeysToReducer();
-		listenToEndOfReducer();
+		listenToEndOfMapReduce(EOR_URL);
 
 		return true;
 	}
@@ -131,48 +134,79 @@ public class Master {
 		List<S3File> s3Files = s3wrapper.getListOfObjects(job.getConfiguration().get(INPUT_PATH));
 		Collections.sort(s3Files);
 
-		List<NodeToFile> nodeToFile = new ArrayList<>(nodes.size()); 
+		List<NodeToTask> nodeToFile = new ArrayList<>(nodes.size()); 
 		for (Node node : nodes) {
-			nodeToFile.add(new NodeToFile(node));
+			nodeToFile.add(new NodeToTask(node));
 		}
 
 		for (S3File file : s3Files) {
 			if (file.getFileName().endsWith(".gz")) {
-				nodeToFile.get(0).addToFileNameLst(file.getFileName());
+				nodeToFile.get(0).addToTaskLst(file.getFileName());
 				nodeToFile.get(0).addToTotalSize(file.getSize());
 			}
 			Collections.sort(nodeToFile);
 		}
 
-		for (NodeToFile node : nodeToFile) {
-			NodeCommWrapper.sendData(node.getNode().getPrivateIp(), FILE_URL, node.getFileNameLst());
+		for (NodeToTask node : nodeToFile) {
+			NodeCommWrapper.sendData(node.getNode().getPrivateIp(), FILE_URL, node.getTaskLst());
 		}
 	}
 	
-	private void listenToEndOfMapper() {
-		post(EOM_URL, (request, response) -> {
+	/**
+	 * Step 4 and 6
+	 */
+	private void listenToEndOfMapReduce(String url) {
+		post(url, (request, response) -> {
 			response.status(200);
 			response.body("SUCCESS");
-			noOfMapperDone.incrementAndGet();
+			noOfMapReduceDone.incrementAndGet();
 			return response.body().toString();
 		});
 		
-		while (noOfMapperDone.get() != slaveCount) {
+		while (noOfMapReduceDone.get() != slaveCount) {
 			try {
 				Thread.sleep(30000);
 			} catch (InterruptedException e) {
 				// TODO
 			}
 		}
+		
+		noOfMapReduceDone.set(0);
+	}
+	
+	/**
+	 * Step 5
+	 */
+	// TODO 
+	private void sendKeysToReducer() {
+		List<S3File> s3Files = s3wrapper.getListOfObjects(job.getConfiguration().get(OUTPUT_PATH) + MAPPER_OP_DIR);
+		Collections.sort(s3Files);
+
+		List<NodeToTask> nodeToFile = new ArrayList<>(nodes.size()); 
+		for (Node node : nodes) {
+			nodeToFile.add(new NodeToTask(node));
+		}
+		
+		for (S3File file : s3Files) {
+			if (file.getFileName().endsWith(".gz")) {
+				nodeToFile.get(0).addToTaskLst(file.getFileName());
+				nodeToFile.get(0).addToTotalSize(file.getSize());
+			}
+			Collections.sort(nodeToFile);
+		}
+
+		for (NodeToTask node : nodeToFile) {
+			NodeCommWrapper.sendData(node.getNode().getPrivateIp(), FILE_URL, node.getTaskLst());
+		}
 	}
 }
 
-class NodeToFile implements Comparable<NodeToFile>{
+class NodeToTask implements Comparable<NodeToTask>{
 	private Node node;
 	private Long totalSize = new Long(0);
-	private StringBuilder fileNameLst = new StringBuilder();
+	private StringBuilder taskLst = new StringBuilder();
 
-	public NodeToFile(Node node) {
+	public NodeToTask(Node node) {
 		this.node = node;
 	}
 
@@ -188,17 +222,17 @@ class NodeToFile implements Comparable<NodeToFile>{
 		this.totalSize += totalSize;
 	}
 
-	public String getFileNameLst() {
-		fileNameLst.deleteCharAt(fileNameLst.length() - 1);
-		return fileNameLst.toString();
+	public String getTaskLst() {
+		taskLst.deleteCharAt(taskLst.length() - 1);
+		return taskLst.toString();
 	}
 
-	public void addToFileNameLst(String fileName) {
-		fileNameLst.append(fileName).append(",");
+	public void addToTaskLst(String fileName) {
+		taskLst.append(fileName).append(",");
 	}
 
 	@Override
-	public int compareTo(NodeToFile o) {
+	public int compareTo(NodeToTask o) {
 		return totalSize.compareTo(o.getTotalSize());
 	}
 }
