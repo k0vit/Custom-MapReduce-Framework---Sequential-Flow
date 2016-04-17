@@ -7,10 +7,13 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Properties;
 import java.util.logging.Logger;
 
+import org.apache.commons.io.FileUtils;
 import org.jets3t.service.Constants;
 import org.jets3t.service.Jets3tProperties;
 import org.jets3t.service.S3Service;
@@ -30,12 +33,9 @@ import neu.edu.utilities.S3Wrapper;
 import neu.edu.utilities.Utilities;
 
 /**
- * download cluster.properties
- * download InstanceDetails.csv
+ * download cluster.properties download InstanceDetails.csv
  * 
- * listen to "/start"
- * download Config
- * Instantiate SlaveJob call start
+ * listen to "/start" download Config Instantiate SlaveJob call start
  * 
  * listen on /file
  * 
@@ -52,107 +52,27 @@ public class Slave {
 	private static final String endOfReducer = "/EOR";
 	private static String MASTER_IP;
 	public static String JOB_NAME;
-    public static String MAPPER_CLASS;
-    public static String REDUCER_CLASS;
-    public static String OUTPUT_KEY_CLASS;
-    public static String OUTPUT_VALUE_CLASS;
-    public static String MAP_OUTPUT_KEY_CLASS;
-    public static String MAP_OUTPUT_VALUE_CLASS;
-    public static String INPUT_PATH;
-    public static String OUTPUT_PATH;
-    public static String JAR_BY_CLASS;
-    public static String BUCKET_NAME;
-    public static String ACCESS_KEY;
-    public static String SECRET_KEY;
-    
+	public static String MAPPER_CLASS;
+	public static String REDUCER_CLASS;
+	public static String OUTPUT_KEY_CLASS;
+	public static String OUTPUT_VALUE_CLASS;
+	public static String MAP_OUTPUT_KEY_CLASS;
+	public static String MAP_OUTPUT_VALUE_CLASS;
+	public static String INPUT_PATH;
+	public static String OUTPUT_PATH;
+	public static String JAR_BY_CLASS;
+	public static String BUCKET_NAME;
+	public static String ACCESS_KEY;
+	public static String SECRET_KEY;
+
 	public static void main(String[] args) {
 		initialiseAllProperties();
-		
+
 		List<Node> instanceNodes = Utilities.readInstanceDetails();
-		
+
 		ReceiveFilesFromMaster();
-		
+
 		ReceiveKeysFromMaster();
-		
-	}
-	
-	private static void ReceiveKeysFromMaster() {
-		post("keys", (request, response) -> {
-			log.info("Received keys from Master..Keys: " + request.body());
-			String keys = request.body();
-			String[] keySplit = keys.split(",");
-			
-			for (String key : keySplit) {
-				downloadBucketIntoLocal(key);
-				File[] files = listDirectory(key);
-				for (File file : files) {
-					BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(file)));
-					String line = null;
-					while ((line = br.readLine()) != null) {
-						//Each line do something.
-					}
-				}
-			}
-			
-			response.status(200);
-			response.body("SUCCESS");
-			return response.body().toString();
-		});
-		
-		
-		log.info("All files done..Sending end of reducer to Master");
-		NodeCommWrapper.SendData(MASTER_IP, port, endOfReducer, "DONE");
-		
-		
-	}
-
-	private static void downloadBucketIntoLocal(String key) {
-		AWSCredentials awsCred = new AWSCredentials(ACCESS_KEY, SECRET_KEY);
-		S3Service s3Service = new RestS3Service(awsCred);
-		S3Bucket s3Bucket;
-		try {
-			s3Bucket = s3Service.getBucket(key);
-			S3Object[] bucketFiles = s3Service.listObjects(s3Bucket.getName());
-			SimpleThreadedStorageService simpleMulti = new SimpleThreadedStorageService(s3Service);
-			DownloadPackage[] downloadPackages = new DownloadPackage[bucketFiles.length];
-			for (int i = 0; i < downloadPackages.length; i++) {
-				downloadPackages[i] = new DownloadPackage(bucketFiles[i], new File(bucketFiles[i].getKey()));
-			}
-			simpleMulti.downloadObjects(key, downloadPackages);
-		} catch (ServiceException e) {
-			log.severe("Service exception connected to S3: Exception: " + e.getMessage());
-		}
-		
-	}
-
-	private static void ReceiveFilesFromMaster() {
-		post("/files", (request, response) -> {
-			log.info("Received files from Master for downloading");
-			MASTER_IP = request.ip();
-			String files = request.body();
-			String[] filenames = files.split(",");
-			BasicAWSCredentials awsCred = new BasicAWSCredentials(ACCESS_KEY, SECRET_KEY);
-//			S3Service s3Service = new RestS3Service(awsCred);
-			for (String filename : filenames) {
-				// Download each file received.
-				String localFile = S3Wrapper.downloadAndStoreFileInLocal(filename, awsCred, BUCKET_NAME);
-
-				try (FileInputStream fis = new FileInputStream(localFile);
-						BufferedReader br = new BufferedReader(new InputStreamReader(fis))) {
-					String line = null;
-					while ((line = br.readLine()) != null) {
-						// Go through each line.
-					}
-				}
-
-			}
-			
-			log.info("All files done..Sending end of mapper to Master");
-			NodeCommWrapper.SendData(MASTER_IP, port, endOfMap, "DONE");
-			response.status(200);
-			response.body("SUCCESS");
-			return response.body().toString();
-		});
 	}
 
 	private static void initialiseAllProperties() {
@@ -164,7 +84,7 @@ public class Slave {
 
 		AWSCredentials awsCred = new AWSCredentials(ACCESS_KEY, SECRET_KEY);
 		S3Service s3Service = new RestS3Service(awsCred);
-		
+
 		try {
 			S3Object config = s3Service.getObject(BUCKET_NAME, "configuration.prop");
 			Properties configuration = new Properties();
@@ -184,11 +104,12 @@ public class Slave {
 		} catch (IOException e) {
 			log.severe("Cannot load inputstream from the S3 object");
 		}
-		
+
 	}
-	
+
 	private static void setJetS3TProperties() {
-		// Load your default settings from jets3t.properties file on the classpath
+		// Load your default settings from jets3t.properties file on the
+		// classpath
 		Jets3tProperties myProperties = Jets3tProperties.getInstance(Constants.JETS3T_PROPERTIES_FILENAME);
 
 		// Override default properties (increase number of connections and
@@ -198,7 +119,82 @@ public class Slave {
 		myProperties.setProperty("s3service.max-thread-count", "8");
 		log.info("Set the JetS3t multithreading properties");
 	}
-	
+
+	private static void ReceiveFilesFromMaster() {
+		post("/files", (request, response) -> {
+			log.info("Received files from Master for downloading");
+			MASTER_IP = request.ip();
+			String files = request.body();
+			String[] filenames = files.split(",");
+			BasicAWSCredentials awsCred = new BasicAWSCredentials(ACCESS_KEY, SECRET_KEY);
+			for (String filename : filenames) {
+				// Download each file received.
+				String localFile = S3Wrapper.downloadAndStoreFileInLocal(filename, awsCred, BUCKET_NAME);
+
+				try (FileInputStream fis = new FileInputStream(localFile);
+						BufferedReader br = new BufferedReader(new InputStreamReader(fis))) {
+					String line = null;
+					while ((line = br.readLine()) != null) {
+						// Go through each line. and call mapper instance.
+					}
+				}
+
+			}
+
+			log.info("All files done..Sending end of mapper to Master");
+			NodeCommWrapper.SendData(MASTER_IP, port, endOfMap, "DONE");
+			response.status(200);
+			response.body("SUCCESS");
+			return response.body().toString();
+		});
+	}
+
+	private static void ReceiveKeysFromMaster() {
+		post("keys", (request, response) -> {
+			log.info("Received keys from Master..Keys: " + request.body());
+			String keys = request.body();
+			String[] keySplit = keys.split(",");
+
+			for (String key : keySplit) {
+				downloadBucketIntoLocal(key);
+				List<String> allKeyData = new ArrayList<String>();
+				File[] files = listDirectory(key);
+				for (File file : files) {
+					List<String> fileData = FileUtils.readLines(file, "UTF-8");
+					allKeyData.addAll(fileData);
+				}
+				Iterator<String> fullDataIterable = allKeyData.iterator();
+				// Pass it to reducer.
+			}
+
+			response.status(200);
+			response.body("SUCCESS");
+			return response.body().toString();
+		});
+
+		log.info("All files done..Sending end of reducer to Master");
+		NodeCommWrapper.SendData(MASTER_IP, port, endOfReducer, "DONE");
+	}
+
+	private static void downloadBucketIntoLocal(String key) {
+		AWSCredentials awsCred = new AWSCredentials(ACCESS_KEY, SECRET_KEY);
+		S3Service s3Service = new RestS3Service(awsCred);
+		S3Bucket s3Bucket;
+		try {
+			s3Bucket = s3Service.getBucket(key);
+			S3Object[] bucketFiles = s3Service.listObjects(s3Bucket.getName());
+			SimpleThreadedStorageService simpleMulti = new SimpleThreadedStorageService(s3Service);
+			DownloadPackage[] downloadPackages = new DownloadPackage[bucketFiles.length];
+			for (int i = 0; i < downloadPackages.length; i++) {
+				downloadPackages[i] = new DownloadPackage(bucketFiles[i], new File(bucketFiles[i].getKey()));
+			}
+			simpleMulti.downloadObjects(key, downloadPackages);
+		} catch (ServiceException e) {
+			log.severe("Service exception connected to S3: Exception: " + e.getMessage());
+		}
+
+	}
+
 	/**
 	 * List a given folder.
 	 * 
@@ -211,5 +207,5 @@ public class Slave {
 		File[] files = directory.listFiles();
 		return files;
 	}
-	
+
 }
