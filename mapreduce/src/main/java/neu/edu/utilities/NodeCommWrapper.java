@@ -5,6 +5,7 @@ import static org.apache.hadoop.Constants.CommProperties.DEFAULT_PORT;
 
 import java.util.logging.Logger;
 
+import com.mashape.unirest.http.HttpResponse;
 import com.mashape.unirest.http.Unirest;
 import com.mashape.unirest.http.exceptions.UnirestException;
 /**
@@ -22,7 +23,7 @@ public class NodeCommWrapper {
 		log.info(String.format("Sending data to %s", address));
 		try {
 			//Unirest.setTimeouts(10000, 120000);
-			Unirest.post(address).body(data).asString();
+			HttpResponse<String> resp = Unirest.post(address).body(data).asString();
 		} catch (UnirestException e) {
 			log.severe("Exception sending post request: " + e.getMessage());
 			log.severe("RETRY sending file");

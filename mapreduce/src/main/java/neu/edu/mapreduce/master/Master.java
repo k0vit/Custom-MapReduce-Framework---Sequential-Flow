@@ -103,4 +103,8 @@ public class Master {
 			}
 		}
 	}
+	
+	private void sendFilesToMapper() {
+		
+	}
 }

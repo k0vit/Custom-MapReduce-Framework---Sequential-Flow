@@ -32,6 +32,14 @@ public class S3Wrapper {
 	public S3Wrapper(AmazonS3 s3client) {
 		this.s3client = s3client;
 	}
+	
+	public List<S3File> getListOfObjects(String s3InputPath) {
+		String simplifiedPath = removeS3(s3InputPath);
+		int index = simplifiedPath.indexOf("/");
+		String bucketName = simplifiedPath.substring(0, index);
+		String prefix = simplifiedPath.substring(index + 1);
+		return getListOfObjects(bucketName, prefix);
+	}
 
 	/**
 	 * List objects of the given path.
@@ -40,24 +48,23 @@ public class S3Wrapper {
 	 * @param prefix
 	 * @return
 	 */
-	public List<String> getListOfObjects(String bucketName, String prefix) {
+	public List<S3File> getListOfObjects(String bucketName, String prefix) {
 		log.info(String.format("Requesting object listing for s3://%s/%s", bucketName, prefix));
-
+		
 		ListObjectsRequest request = new ListObjectsRequest();
 		request.withBucketName(bucketName);
 		request.withPrefix(prefix);
-
-		ArrayList<String> files = new ArrayList<String>();
+		
+		List<S3File> s3Files = new ArrayList<S3File>();
 		ObjectListing listing = null;
 		do {
 			listing = s3client.listObjects(request);
 			for (S3ObjectSummary summary : listing.getObjectSummaries()) {
-				log.info("Object: " + summary.getKey());
-				files.add(summary.getKey());
+				s3Files.add(new S3File(summary.getKey(), summary.getSize()));
 			}
 		} while (listing.isTruncated());
-
-		return files;
+		
+		return s3Files;
 	}
 
 	/**
@@ -249,4 +256,24 @@ public class S3Wrapper {
 	private static final Logger log = Logger.getLogger(S3Wrapper.class.getName());
 	private AmazonS3 s3client;
 
+}
+
+class S3File {
+	private String file;
+	private long size;
+	public String getFileName() {
+		return file;
+	}
+	public long getSize() {
+		return size;
+	}
+	public S3File(String file, long size) {
+		super();
+		this.file = file;
+		this.size = size;
+	}
+	@Override
+	public String toString() {
+		return "S3File [file=" + file + ", size=" + size + "]";
+	}
 }
