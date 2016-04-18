@@ -1,7 +1,10 @@
 package neu.edu.mapreduce.slave;
 
 import static org.apache.hadoop.Constants.ClusterProperties.BUCKET;
+import static org.apache.hadoop.Constants.CommProperties.EOM_URL;
+import static org.apache.hadoop.Constants.CommProperties.EOR_URL;
 import static org.apache.hadoop.Constants.CommProperties.FILE_URL;
+import static org.apache.hadoop.Constants.CommProperties.KEY_URL;
 import static org.apache.hadoop.Constants.CommProperties.START_JOB_URL;
 import static org.apache.hadoop.Constants.FileConfig.FILE_SPLITTER;
 import static org.apache.hadoop.Constants.FileConfig.IP_OF_MAP;
@@ -15,6 +18,7 @@ import static spark.Spark.stop;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -35,6 +39,7 @@ import org.jets3t.service.security.AWSCredentials;
 
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.services.s3.AmazonS3Client;
+import com.mashape.unirest.http.Unirest;
 
 import neu.edu.utilities.NodeCommWrapper;
 import neu.edu.utilities.S3Wrapper;
@@ -68,7 +73,6 @@ import neu.edu.utilities.Utilities;
  * 
  * 5) 
  * call /EOM as mapper is done.
- * stop the routes /EOM and /File
  * 
  * 6) 
  * listen to /Key for the set of keys from the reducer
@@ -133,12 +137,14 @@ class SlaveJob implements Runnable {
 	private Properties jobConfiguration;
 	private String masterIp;
 	private static String filesToProcess;
+	private static String keysToProcess;
 
 	@Override
 	public void run() {
 		setup();
 		map();
-		ReceiveKeysFromMaster();
+		reduce();
+		tearDown();
 	}
 
 	/**
@@ -162,6 +168,7 @@ class SlaveJob implements Runnable {
 	private void map() {
 		readFiles();
 		processFiles();
+		NodeCommWrapper.sendData(masterIp, EOM_URL);
 	}
 
 	private void readFiles() {
@@ -211,12 +218,18 @@ class SlaveJob implements Runnable {
 		outputDir.mkdir();
 	}
 
+	private String downloadFile(String file) {
+		String s3FilePath = jobConfiguration.getProperty(INPUT_PATH) + S3_PATH_SEP + file;
+		String localFilePath = IP_OF_MAP + File.separator + file;
+		return s3wrapper.readOutputFromS3(s3FilePath, localFilePath);
+	}
+
 	@SuppressWarnings("rawtypes")
 	private void processFile(String file) {
-		
+
 		Mapper<?,?,?,?> mapper = instantiateMapper();
 		Context context = mapper.new Context();
-		
+
 		try (BufferedReader br = new BufferedReader(new FileReader(file))){
 			String line = null;
 			while((line = br.readLine()) != null) {
@@ -226,23 +239,38 @@ class SlaveJob implements Runnable {
 		catch(Exception e) {
 			// TODO
 		}
-		
+
 		context.close();
+	}
+
+	// TODO
+	private Mapper<?, ?, ?, ?> instantiateMapper() {
+		return null;
 	}
 
 	private void processLine(String line, Mapper<?, ?, ?, ?> mapper, Context context) {
 		// TODO
 	}
 
-	private String downloadFile(String file) {
-		String s3FilePath = jobConfiguration.getProperty(INPUT_PATH) + S3_PATH_SEP + file;
-		String localFilePath = IP_OF_MAP + File.separator + file;
-		return s3wrapper.readOutputFromS3(s3FilePath, localFilePath);
+	private void reduce() {
+		readKey();
+		processKey();
+		NodeCommWrapper.sendData(masterIp, EOR_URL);
 	}
 
-	// TODO
-	private Mapper<?, ?, ?, ?> instantiateMapper() {
-		return null;
+	private void readKey() {
+		post(KEY_URL, (request, response) -> {
+			masterIp = request.ip();
+			keysToProcess = request.body();
+			response.status(200);
+			response.body("SUCCESS");
+			return response.body().toString();
+		});		
+
+		while (keysToProcess == null) {}
+
+		// TODO test 
+		stop();
 	}
 
 	private static void ReceiveKeysFromMaster() {
@@ -302,5 +330,13 @@ class SlaveJob implements Runnable {
 		File directory = new File(directoryPath);
 		File[] files = directory.listFiles();
 		return files;
+	}
+
+	private void tearDown() {
+		try {
+			Unirest.shutdown();
+		} catch (IOException e) {
+			// TODO
+		}
 	}
 }
