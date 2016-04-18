@@ -1,15 +1,14 @@
 package neu.edu.mapreduce.slave;
 
 import static org.apache.hadoop.Constants.ClusterProperties.BUCKET;
+import static org.apache.hadoop.Constants.CommProperties.FILE_URL;
 import static org.apache.hadoop.Constants.CommProperties.START_JOB_URL;
 import static org.apache.hadoop.Constants.FileConfig.JOB_CONF_PROP_FILE_NAME;
 import static org.apache.hadoop.Constants.FileConfig.S3_PATH_SEP;
 import static spark.Spark.post;
+import static spark.Spark.stop;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -45,6 +44,7 @@ import neu.edu.utilities.Utilities;
  * 
  * 3) 
  * listen to /file to start the mapper task
+ * stop the server
  *  
  * 4)
  * Create a folder called OutputOfMap 
@@ -101,7 +101,7 @@ import neu.edu.utilities.Utilities;
  */
 public class Slave {
 	private static final Logger log = Logger.getLogger(Slave.class.getName());
-	
+
 	public static void main() {
 		/**
 		 * step 1
@@ -118,17 +118,23 @@ public class Slave {
 class SlaveJob implements Runnable {
 
 	private static final Logger log = Logger.getLogger(SlaveJob.class.getName());
-	
+
 	private Properties clusterProperties;
 	private String slaveId;
 	private S3Wrapper s3wrapper;
 	private Properties jobConfiguration;
-	
+	private String masterIp;
+	private static String filesToProcess;
+
 	@Override
 	public void run() {
 		setup();
-		ReceiveFilesFromMaster();
+		map();
 		ReceiveKeysFromMaster();
+	}
+
+	private void map() {
+		readFile();		
 	}
 
 	/**
@@ -137,7 +143,7 @@ class SlaveJob implements Runnable {
 	private void setup() {
 		s3wrapper = new S3Wrapper(new AmazonS3Client(new BasicAWSCredentials
 				(clusterProperties.getProperty("AccessKey"), clusterProperties.getProperty("SecretKey"))));
-		
+
 		clusterProperties = Utilities.readClusterProperties();
 		slaveId = Utilities.getSlaveId(Utilities.readInstanceDetails());
 		jobConfiguration = downloadAndReadJobConfig();
@@ -149,33 +155,22 @@ class SlaveJob implements Runnable {
 		return Utilities.readPropertyFile(localFilePath);
 	}
 
-	private static void ReceiveFilesFromMaster() {
-		post("/files", (request, response) -> {
-			log.info("Received files from Master for downloading");
-			MASTER_IP = request.ip();
-			String files = request.body();
-			String[] filenames = files.split(",");
-			BasicAWSCredentials awsCred = new BasicAWSCredentials(ACCESS_KEY, SECRET_KEY);
-			for (String filename : filenames) {
-				// Download each file received.
-				String localFile = S3Wrapper.downloadAndStoreFileInLocal(filename, awsCred, BUCKET_NAME);
+	private void readFile() {
+		listenToFile();
+	}
 
-				try (FileInputStream fis = new FileInputStream(localFile);
-						BufferedReader br = new BufferedReader(new InputStreamReader(fis))) {
-					String line = null;
-					while ((line = br.readLine()) != null) {
-						// Go through each line. and call mapper instance.
-					}
-				}
-
-			}
-
-			log.info("All files done..Sending end of mapper to Master");
-			NodeCommWrapper.sendData(MASTER_IP, port, endOfMap, "DONE");
+	private void listenToFile() {
+		post(FILE_URL, (request, response) -> {
+			masterIp = request.ip();
+			filesToProcess = request.body();
 			response.status(200);
 			response.body("SUCCESS");
 			return response.body().toString();
-		});
+		});		
+		
+		while (filesToProcess == null) {}
+		// TODO test 
+		stop();
 	}
 
 	private static void ReceiveKeysFromMaster() {
