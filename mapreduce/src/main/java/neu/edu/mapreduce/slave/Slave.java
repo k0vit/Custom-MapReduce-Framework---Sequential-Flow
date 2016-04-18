@@ -3,12 +3,18 @@ package neu.edu.mapreduce.slave;
 import static org.apache.hadoop.Constants.ClusterProperties.BUCKET;
 import static org.apache.hadoop.Constants.CommProperties.FILE_URL;
 import static org.apache.hadoop.Constants.CommProperties.START_JOB_URL;
+import static org.apache.hadoop.Constants.FileConfig.FILE_SPLITTER;
+import static org.apache.hadoop.Constants.FileConfig.IP_OF_MAP;
 import static org.apache.hadoop.Constants.FileConfig.JOB_CONF_PROP_FILE_NAME;
+import static org.apache.hadoop.Constants.FileConfig.OP_OF_MAP;
 import static org.apache.hadoop.Constants.FileConfig.S3_PATH_SEP;
+import static org.apache.hadoop.Constants.JobConf.INPUT_PATH;
 import static spark.Spark.post;
 import static spark.Spark.stop;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -16,6 +22,8 @@ import java.util.Properties;
 import java.util.logging.Logger;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.hadoop.mapreduce.Mapper;
+import org.apache.hadoop.mapreduce.Mapper.Context;
 import org.jets3t.service.S3Service;
 import org.jets3t.service.ServiceException;
 import org.jets3t.service.impl.rest.httpclient.RestS3Service;
@@ -133,10 +141,6 @@ class SlaveJob implements Runnable {
 		ReceiveKeysFromMaster();
 	}
 
-	private void map() {
-		readFile();		
-	}
-
 	/**
 	 * step 2
 	 */
@@ -155,11 +159,12 @@ class SlaveJob implements Runnable {
 		return Utilities.readPropertyFile(localFilePath);
 	}
 
-	private void readFile() {
-		listenToFile();
+	private void map() {
+		readFiles();
+		processFiles();
 	}
 
-	private void listenToFile() {
+	private void readFiles() {
 		post(FILE_URL, (request, response) -> {
 			masterIp = request.ip();
 			filesToProcess = request.body();
@@ -167,10 +172,77 @@ class SlaveJob implements Runnable {
 			response.body("SUCCESS");
 			return response.body().toString();
 		});		
-		
+
 		while (filesToProcess == null) {}
+
 		// TODO test 
 		stop();
+	}
+
+	/**
+	 * Step 4
+	 * 
+	 * Create a folder called OutputOfMap 
+	 * for each file 
+	 * -- download the file
+	 * -- Instantiate the mapper class 
+	 * -- for each record in the file 
+	 * ---- call the map method 
+	 * -- once the file is done: 
+	 * ---- call the close on Context to close all the FileWriter (check Context.write on Mapper below)
+	 * ---- upload the contents on s3
+	 * ---- delete the file
+	 */
+	private void processFiles() {
+		mapSetup();
+		String files[] = filesToProcess.split(FILE_SPLITTER);
+		for (String file: files) {
+			String localFilePath = downloadFile(file);
+			processFile(localFilePath);
+			new File(localFilePath).delete();
+		}
+	}
+
+	private void mapSetup() {
+		File inputDir = new File(IP_OF_MAP);
+		inputDir.mkdir();
+
+		File outputDir = new File(OP_OF_MAP);
+		outputDir.mkdir();
+	}
+
+	@SuppressWarnings("rawtypes")
+	private void processFile(String file) {
+		
+		Mapper<?,?,?,?> mapper = instantiateMapper();
+		Context context = mapper.new Context();
+		
+		try (BufferedReader br = new BufferedReader(new FileReader(file))){
+			String line = null;
+			while((line = br.readLine()) != null) {
+				processLine(line, mapper, context);
+			}   
+		}
+		catch(Exception e) {
+			// TODO
+		}
+		
+		context.close();
+	}
+
+	private void processLine(String line, Mapper<?, ?, ?, ?> mapper, Context context) {
+		// TODO
+	}
+
+	private String downloadFile(String file) {
+		String s3FilePath = jobConfiguration.getProperty(INPUT_PATH) + S3_PATH_SEP + file;
+		String localFilePath = IP_OF_MAP + File.separator + file;
+		return s3wrapper.readOutputFromS3(s3FilePath, localFilePath);
+	}
+
+	// TODO
+	private Mapper<?, ?, ?, ?> instantiateMapper() {
+		return null;
 	}
 
 	private static void ReceiveKeysFromMaster() {

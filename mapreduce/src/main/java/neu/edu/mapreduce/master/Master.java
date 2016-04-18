@@ -1,6 +1,7 @@
 package neu.edu.mapreduce.master;
 
 import static org.apache.hadoop.Constants.ClusterProperties.BUCKET;
+import static org.apache.hadoop.Constants.FileConfig.FILE_SPLITTER;
 import static org.apache.hadoop.Constants.CommProperties.EOM_URL;
 import static org.apache.hadoop.Constants.CommProperties.EOR_URL;
 import static org.apache.hadoop.Constants.CommProperties.FILE_URL;
@@ -249,10 +250,10 @@ class NodeToTask implements Comparable<NodeToTask>{
 
 	public void addToTaskLst(String taskName, boolean isFile) {
 		if (isFile) {
-			taskLst.append(taskName.substring(taskName.lastIndexOf("/"))).append(",");
+			taskLst.append(taskName.substring(taskName.lastIndexOf(S3_PATH_SEP))).append(FILE_SPLITTER);
 		}
 		else {
-			taskLst.append(taskName).append(",");
+			taskLst.append(taskName).append(FILE_SPLITTER);
 		}
 	}
 

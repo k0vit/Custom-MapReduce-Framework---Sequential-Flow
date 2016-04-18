@@ -9,7 +9,15 @@ public class Mapper<KEYIN, VALUEIN, KEYOUT, VALUEOUT> {
 		@Override
 		public void write(KEYOUT key, VALUEOUT value) {
 			System.out.println(key + " " + value);
+			// TODO
 		}
+		
+		public void close() {
+			// TODO close filewriter
+			// TODO upload files to s3
+		}
+		
+		private void uploadToS3() {}
 	}
 
 	public void setup(Context context) throws IOException, InterruptedException {};
