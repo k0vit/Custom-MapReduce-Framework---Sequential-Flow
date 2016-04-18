@@ -139,6 +139,7 @@ public class Master {
 	private void sendFilesToMapper() {
 		List<S3File> s3Files = s3wrapper.getListOfObjects(job.getConfiguration().get(INPUT_PATH));
 		Collections.sort(s3Files);
+		Collections.reverse(s3Files);
 
 		List<NodeToTask> nodeToFile = new ArrayList<>(nodes.size()); 
 		for (Node node : nodes) {
@@ -147,7 +148,7 @@ public class Master {
 
 		for (S3File file : s3Files) {
 			if (file.getFileName().endsWith(GZ_FILE_EXT)) {
-				nodeToFile.get(0).addToTaskLst(file.getFileName());
+				nodeToFile.get(0).addToTaskLst(file.getFileName(), true);
 				nodeToFile.get(0).addToTotalSize(file.getSize());
 			}
 			Collections.sort(nodeToFile);
@@ -190,9 +191,9 @@ public class Master {
 		String key = null;
 		for (S3File file : s3Files) {
 			String fileName = file.getFileName();
-			if (file.getFileName().endsWith(KEY_DIR_SUFFIX)) {
-				String prefix = fileName.substring(fileName.lastIndexOf(S3_PATH_SEP) + 1);
-				key = prefix.replace(KEY_DIR_SUFFIX, "");
+			if (fileName.endsWith(KEY_DIR_SUFFIX)) {
+				String prefix = fileName.replace(KEY_DIR_SUFFIX, "");
+				key = prefix.substring(prefix.lastIndexOf(S3_PATH_SEP) + 1);
 				keyToSize.put(key, 0l);
 			}
 			else {
@@ -209,7 +210,7 @@ public class Master {
 
 		Map<String, Long> sortedMap = Utilities.sortByValue(keyToSize);
 		for (String k : sortedMap.keySet()) {
-			nodeToFile.get(0).addToTaskLst(k);
+			nodeToFile.get(0).addToTaskLst(k, false);
 			nodeToFile.get(0).addToTotalSize(sortedMap.get(k));
 			Collections.sort(nodeToFile);
 		}
@@ -246,12 +247,23 @@ class NodeToTask implements Comparable<NodeToTask>{
 		return taskLst.toString();
 	}
 
-	public void addToTaskLst(String fileName) {
-		taskLst.append(fileName).append(",");
+	public void addToTaskLst(String taskName, boolean isFile) {
+		if (isFile) {
+			taskLst.append(taskName.substring(taskName.lastIndexOf("/"))).append(",");
+		}
+		else {
+			taskLst.append(taskName).append(",");
+		}
 	}
 
 	@Override
 	public int compareTo(NodeToTask o) {
 		return totalSize.compareTo(o.getTotalSize());
+	}
+
+	@Override
+	public String toString() {
+		return "NodeToTask [node=" + node + ", totalSize=" + totalSize
+				+ ", taskLst=" + taskLst + "]";
 	}
 }
