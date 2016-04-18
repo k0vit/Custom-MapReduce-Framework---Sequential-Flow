@@ -33,15 +33,68 @@ import neu.edu.utilities.S3Wrapper;
 import neu.edu.utilities.Utilities;
 
 /**
- * download cluster.properties download InstanceDetails.csv
+ * 1) 
+ * Read cluster.properties
+ * Download and Read configuration.properties
  * 
- * listen to "/start" download Config Instantiate SlaveJob call start
+ * 2) 
+ * listen on /Start
+ * For each job there /Start will be called
+ * Create a new Instance of SlaveJob and call the run
  * 
- * listen on /file
+ * 3) 
+ * listen to /file to start the mapper task
+ *  
+ * 4)
+ * Create a folder called OutputOfMap 
+ * for each file 
+ * -- download the file
+ * -- Instantiate the mapper class 
+ * -- for each record in the file 
+ * ---- call the map method 
+ * -- once the file is done 
+ * ---- call the close on Context to close all the FileWriter (check Context.write on Mapper below)
+ * ---- upload the contents on s3
+ * ---- delete the file
+ * 
+ * 5) 
+ * call /EOM as mapper is done.
+ * stop the routes /EOM and /File
+ * 
+ * 6) 
+ * listen to /Key for the set of keys from the reducer
+ * 
+ * 7)
+ * Create a folder Output
+ * For each key 
+ * -- Open file writer to file part-r-00<slaveId>-<file counter>
+ * -- download the key directory from the s3
+ * -- read all the files 
+ * -- generate the iterator
+ * -- Instantiate the reducer class
+ * -- call the reduce method with the iterable
+ * -- Close the file writer once the file is done
+ * -- once done delete the key dir
+ * 
+ * 
+ * 8)  
+ * call /EOR 
+ * once we get the response stop the spark java cluster
+ * 
+ * 
+ * Context.write of Mapper [context.write(key, value)]
+ * -- for each key 
+ * ---- check if the key exist in the map maintained by the Context class [Map<String, FileWriter>]
+ * ---- if the key is not present:
+ * ------ create a dir called <key>_key_dir and create a file with <key>_timestamp_<slaveid> 
+ * ------ open  FileWriter for that file and put in the map
+ * ---- get the FileWriter from the map and write the record to it
  * 
  * 
  * 
- * 
+ * Context.write of Reducer [contex.write(key, value)]
+ * -- for each call write the record using the filewriter
+ *  
  * @author kovit
  *
  */
