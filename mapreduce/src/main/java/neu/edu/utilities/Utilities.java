@@ -8,6 +8,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.InputStream;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -16,6 +18,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Random;
 
 import neu.edu.mapreduce.common.Node;
 public class Utilities {
@@ -42,10 +45,14 @@ public class Utilities {
 	}
 
 	public static Properties readClusterProperties() {
+		return readPropertyFile(CLUSTER_PROP_FILE_NAME);
+	}
+	
+	public static Properties readPropertyFile(String localFilePath) {
 		Properties prop = new Properties();
 		InputStream input = null;
 		try {
-			input = new FileInputStream(CLUSTER_PROP_FILE_NAME);
+			input = new FileInputStream(localFilePath);
 			prop.load(input);
 			input.close();
 		}
@@ -69,5 +76,22 @@ public class Utilities {
 			result.put( entry.getKey(), entry.getValue() );
 		}
 		return result;
+	}
+
+	public static String getSlaveId(List<Node> nodes) {
+		String ip = null;
+		try {
+			ip = InetAddress.getLocalHost().getHostAddress();
+		} catch (UnknownHostException e) {
+			// TODO 
+		}
+		
+		for (Node node: nodes) {
+			if (node.getPrivateIp().equals(ip)) {
+				return node.getId();
+			}
+		}
+		
+		return String.valueOf(new Random().nextInt(100));
 	}
 }

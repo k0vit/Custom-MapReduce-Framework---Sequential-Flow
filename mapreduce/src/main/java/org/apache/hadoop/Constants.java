@@ -24,6 +24,7 @@ public class Constants {
 		public static final String MAPPER_OP_DIR = "/OutputOfMapper";
 		public static final String S3_PATH_SEP = "/";
 		public static final String GZ_FILE_EXT = ".gz";
+		public static final String S3_URL = "s3://";
 	}
 
 	public static class ClusterProperties {

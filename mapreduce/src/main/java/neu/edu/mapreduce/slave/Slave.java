@@ -1,11 +1,14 @@
 package neu.edu.mapreduce.slave;
 
+import static org.apache.hadoop.Constants.ClusterProperties.BUCKET;
+import static org.apache.hadoop.Constants.CommProperties.START_JOB_URL;
+import static org.apache.hadoop.Constants.FileConfig.JOB_CONF_PROP_FILE_NAME;
+import static org.apache.hadoop.Constants.FileConfig.S3_PATH_SEP;
 import static spark.Spark.post;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -14,8 +17,6 @@ import java.util.Properties;
 import java.util.logging.Logger;
 
 import org.apache.commons.io.FileUtils;
-import org.jets3t.service.Constants;
-import org.jets3t.service.Jets3tProperties;
 import org.jets3t.service.S3Service;
 import org.jets3t.service.ServiceException;
 import org.jets3t.service.impl.rest.httpclient.RestS3Service;
@@ -26,21 +27,21 @@ import org.jets3t.service.multi.SimpleThreadedStorageService;
 import org.jets3t.service.security.AWSCredentials;
 
 import com.amazonaws.auth.BasicAWSCredentials;
+import com.amazonaws.services.s3.AmazonS3Client;
 
-import neu.edu.mapreduce.common.Node;
 import neu.edu.utilities.NodeCommWrapper;
 import neu.edu.utilities.S3Wrapper;
 import neu.edu.utilities.Utilities;
 
 /**
  * 1) 
- * Read cluster.properties
- * Download and Read configuration.properties
- * 
- * 2) 
  * listen on /Start
  * For each job there /Start will be called
  * Create a new Instance of SlaveJob and call the run
+ * 
+ * 2) 
+ * Read cluster.properties
+ * Download and Read configuration.properties
  * 
  * 3) 
  * listen to /file to start the mapper task
@@ -100,77 +101,52 @@ import neu.edu.utilities.Utilities;
  */
 public class Slave {
 	private static final Logger log = Logger.getLogger(Slave.class.getName());
-	private static final String port = "4567";
-	private static final String endOfMap = "/EOM";
-	private static final String endOfReducer = "/EOR";
-	private static String MASTER_IP;
-	public static String JOB_NAME;
-	public static String MAPPER_CLASS;
-	public static String REDUCER_CLASS;
-	public static String OUTPUT_KEY_CLASS;
-	public static String OUTPUT_VALUE_CLASS;
-	public static String MAP_OUTPUT_KEY_CLASS;
-	public static String MAP_OUTPUT_VALUE_CLASS;
-	public static String INPUT_PATH;
-	public static String OUTPUT_PATH;
-	public static String JAR_BY_CLASS;
-	public static String BUCKET_NAME;
-	public static String ACCESS_KEY;
-	public static String SECRET_KEY;
+	
+	public static void main() {
+		/**
+		 * step 1
+		 */
+		post(START_JOB_URL, (request, response) -> {
+			response.status(200);
+			response.body("SUCCESS");
+			(new Thread(new SlaveJob())).start();
+			return response.body().toString();
+		});
+	}
+}
 
-	public static void main(String[] args) {
-		initialiseAllProperties();
+class SlaveJob implements Runnable {
 
-		List<Node> instanceNodes = Utilities.readInstanceDetails();
-
+	private static final Logger log = Logger.getLogger(SlaveJob.class.getName());
+	
+	private Properties clusterProperties;
+	private String slaveId;
+	private S3Wrapper s3wrapper;
+	private Properties jobConfiguration;
+	
+	@Override
+	public void run() {
+		setup();
 		ReceiveFilesFromMaster();
-
 		ReceiveKeysFromMaster();
 	}
 
-	private static void initialiseAllProperties() {
-		setJetS3TProperties();
-		Properties properties = Utilities.readClusterProperties();
-		BUCKET_NAME = properties.getProperty("Bucket");
-		ACCESS_KEY = properties.getProperty("AccessKey");
-		SECRET_KEY = properties.getProperty("SecretKey");
-
-		AWSCredentials awsCred = new AWSCredentials(ACCESS_KEY, SECRET_KEY);
-		S3Service s3Service = new RestS3Service(awsCred);
-
-		try {
-			S3Object config = s3Service.getObject(BUCKET_NAME, "configuration.prop");
-			Properties configuration = new Properties();
-			configuration.load(new InputStreamReader(config.getDataInputStream()));
-			JOB_NAME = configuration.getProperty("jobName");
-			MAPPER_CLASS = configuration.getProperty("mapperClass");
-			REDUCER_CLASS = configuration.getProperty("reducerClass");
-			OUTPUT_KEY_CLASS = configuration.getProperty("outputKeyClass");
-			OUTPUT_VALUE_CLASS = configuration.getProperty("outputValueClass");
-			MAP_OUTPUT_KEY_CLASS = configuration.getProperty("mapOutputKeyClass");
-			MAP_OUTPUT_VALUE_CLASS = configuration.getProperty("mapOutputValueClass");
-			INPUT_PATH = configuration.getProperty("inputPath");
-			OUTPUT_PATH = configuration.getProperty("outputPath");
-			JAR_BY_CLASS = configuration.getProperty("jarByClass");
-		} catch (ServiceException e) {
-			log.severe("S3 service is unable to List the S3 bucket: " + BUCKET_NAME);
-		} catch (IOException e) {
-			log.severe("Cannot load inputstream from the S3 object");
-		}
-
+	/**
+	 * step 2
+	 */
+	private void setup() {
+		s3wrapper = new S3Wrapper(new AmazonS3Client(new BasicAWSCredentials
+				(clusterProperties.getProperty("AccessKey"), clusterProperties.getProperty("SecretKey"))));
+		
+		clusterProperties = Utilities.readClusterProperties();
+		slaveId = Utilities.getSlaveId(Utilities.readInstanceDetails());
+		jobConfiguration = downloadAndReadJobConfig();
 	}
 
-	private static void setJetS3TProperties() {
-		// Load your default settings from jets3t.properties file on the
-		// classpath
-		Jets3tProperties myProperties = Jets3tProperties.getInstance(Constants.JETS3T_PROPERTIES_FILENAME);
-
-		// Override default properties (increase number of connections and
-		// myProperties.setProperty("httpclient.max-connections", "100");
-		myProperties.setProperty("threaded-service.max-thread-count", "8");
-		myProperties.setProperty("threaded-service.admin-max-thread-count", "8");
-		myProperties.setProperty("s3service.max-thread-count", "8");
-		log.info("Set the JetS3t multithreading properties");
+	private Properties downloadAndReadJobConfig() {
+		String s3FilePath = clusterProperties.getProperty(BUCKET) + S3_PATH_SEP + JOB_CONF_PROP_FILE_NAME;
+		String localFilePath = s3wrapper.readOutputFromS3(s3FilePath, JOB_CONF_PROP_FILE_NAME);
+		return Utilities.readPropertyFile(localFilePath);
 	}
 
 	private static void ReceiveFilesFromMaster() {
@@ -260,5 +236,4 @@ public class Slave {
 		File[] files = directory.listFiles();
 		return files;
 	}
-
 }

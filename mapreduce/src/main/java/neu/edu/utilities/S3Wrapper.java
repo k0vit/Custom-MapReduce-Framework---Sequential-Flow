@@ -1,5 +1,8 @@
 package neu.edu.utilities;
 
+import static org.apache.hadoop.Constants.FileConfig.S3_PATH_SEP;
+import static org.apache.hadoop.Constants.FileConfig.S3_URL;
+
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileWriter;
@@ -9,8 +12,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
 
+import org.jets3t.service.Constants;
+import org.jets3t.service.Jets3tProperties;
+
 import com.amazonaws.AmazonClientException;
-import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.GetObjectRequest;
 import com.amazonaws.services.s3.model.ListObjectsRequest;
@@ -29,13 +34,26 @@ import com.opencsv.CSVWriter;
  * 
  */
 public class S3Wrapper {
+	private static final Logger log = Logger.getLogger(S3Wrapper.class.getName());
+
+	private AmazonS3 s3client;
+	
 	public S3Wrapper(AmazonS3 s3client) {
 		this.s3client = s3client;
+		//setJetS3TProperties();
+	}
+	
+	private static void setJetS3TProperties() {
+		Jets3tProperties myProperties = Jets3tProperties.getInstance(Constants.JETS3T_PROPERTIES_FILENAME);
+		myProperties.setProperty("threaded-service.max-thread-count", "8");
+		myProperties.setProperty("threaded-service.admin-max-thread-count", "8");
+		myProperties.setProperty("s3service.max-thread-count", "8");
+		log.info("Set the JetS3t multithreading properties");
 	}
 	
 	public List<S3File> getListOfObjects(String s3InputPath) {
 		String simplifiedPath = removeS3(s3InputPath);
-		int index = simplifiedPath.indexOf("/");
+		int index = simplifiedPath.indexOf(S3_PATH_SEP);
 		String bucketName = simplifiedPath.substring(0, index);
 		String prefix = simplifiedPath.substring(index + 1);
 		return getListOfObjects(bucketName, prefix);
@@ -88,29 +106,28 @@ public class S3Wrapper {
 	}
 
 	/**
-	 * Download the given file to the outputpath specified.
 	 * 
-	 * @param outputPath
+	 * @param s3FilePath
 	 * @param cred
-	 * @param filename
+	 * @param localFilePath
 	 * @return
 	 */
-	public static String readOutputFromS3(String outputPath, BasicAWSCredentials cred, String filename) {
-		TransferManager tx = new TransferManager(cred);
-		String simplifiedPath = (outputPath.replace("s3://", ""));
-		int index = simplifiedPath.indexOf("/");
+	public String readOutputFromS3(String s3FilePath, String localFilePath) {
+		TransferManager tx = new TransferManager(s3client);
+		String simplifiedPath = (s3FilePath.replace(S3_URL, ""));
+		int index = simplifiedPath.indexOf(S3_PATH_SEP);
 		String bucketName = simplifiedPath.substring(0, index);
 		String key = simplifiedPath.substring(index + 1);
-		log.info(String.format("[%s] Downloaded file with Bucket Name: %s Key: %s ", filename, bucketName, key));
+		log.info(String.format("[%s] Downloaded file with Bucket Name: %s Key: %s ", localFilePath, bucketName, key));
 		log.info("CURRENT USER DIRECTORY: " + System.getProperty("user.dir"));
-		Download d = tx.download(bucketName, key, new File(filename));
+		Download d = tx.download(bucketName, key, new File(localFilePath));
 		try {
 			d.waitForCompletion();
 		} catch (AmazonClientException | InterruptedException e) {
-			log.severe("Failed downloading the file " + filename + ". Reason " + e.getMessage());
+			log.severe("Failed downloading the file " + localFilePath + ". Reason " + e.getMessage());
 		}
 		tx.shutdownNow();
-		return filename;
+		return localFilePath;
 	}
 
 	/**
@@ -174,9 +191,9 @@ public class S3Wrapper {
 	 * @return
 	 */
 	private static String removeS3(String path) {
-		if (!path.startsWith("s3://"))
+		if (!path.startsWith(S3_URL))
 			return path;
-		return path.substring("s3://".length());
+		return path.substring(S3_URL.length());
 	}
 
 	/**
@@ -210,11 +227,10 @@ public class S3Wrapper {
 	 * @param inputS3Path
 	 * @return
 	 */
-	public static String downloadAndStoreFileInLocal(String fileString, BasicAWSCredentials awsCredentials,
-			String inputS3Path) {
+	public String downloadAndStoreFileInLocal(String fileString, String inputS3Path) {
 		String s3FullPath = inputS3Path + "/" + fileString;
 		log.info(String.format("[%s] Downloading from s3 full path: %s", fileString, s3FullPath));
-		readOutputFromS3(s3FullPath, awsCredentials, fileString);
+		readOutputFromS3(s3FullPath, fileString);
 		return fileString;
 	}
 
@@ -252,8 +268,4 @@ public class S3Wrapper {
 		log.info("Full file uploaded to S3 at the path: " + s3FullPath);
 		return true;
 	}
-
-	private static final Logger log = Logger.getLogger(S3Wrapper.class.getName());
-	private AmazonS3 s3client;
-
 }
