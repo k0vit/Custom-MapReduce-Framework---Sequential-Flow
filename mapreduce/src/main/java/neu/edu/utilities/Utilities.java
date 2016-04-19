@@ -8,6 +8,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.InputStream;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
@@ -119,8 +121,15 @@ public class Utilities {
 	}
 
 	public static void createDirs(String inputDir, String outputDir) {
+		log.info("Creating directory " + inputDir + " and " + outputDir);
 		new File(inputDir).mkdirs();
 		new File(outputDir).mkdirs();
+	}
+	
+	public static String printStackTrace(Exception e) {
+		StringWriter errors = new StringWriter();
+		e.printStackTrace(new PrintWriter(errors));
+		return errors.toString();
 	}
 }
 

@@ -7,7 +7,9 @@ import static org.apache.hadoop.Constants.CommProperties.EOM_URL;
 import static org.apache.hadoop.Constants.CommProperties.EOR_URL;
 import static org.apache.hadoop.Constants.CommProperties.FILE_URL;
 import static org.apache.hadoop.Constants.CommProperties.KEY_URL;
+import static org.apache.hadoop.Constants.CommProperties.OK;
 import static org.apache.hadoop.Constants.CommProperties.START_JOB_URL;
+import static org.apache.hadoop.Constants.CommProperties.SUCCESS;
 import static org.apache.hadoop.Constants.FileConfig.IP_OF_MAP;
 import static org.apache.hadoop.Constants.FileConfig.IP_OF_REDUCE;
 import static org.apache.hadoop.Constants.FileConfig.JOB_CONF_PROP_FILE_NAME;
@@ -124,8 +126,9 @@ public class Slave {
 		 * step 1
 		 */
 		post(START_JOB_URL, (request, response) -> {
-			response.status(200);
-			response.body("SUCCESS");
+			log.info("Recieved start signal from the master to start a new job " + request.body());
+			response.status(OK);
+			response.body(SUCCESS);
 			(new Thread(new SlaveJob())).start();
 			return response.body().toString();
 		});
@@ -160,17 +163,21 @@ class SlaveJob implements Runnable {
 
 		clusterProperties = Utilities.readClusterProperties();
 		jobConfiguration = downloadAndReadJobConfig();
+		log.info("Slave setup done");
 	}
 
 	private Properties downloadAndReadJobConfig() {
+		log.info("download and load job configuraiton");
 		String s3FilePath = clusterProperties.getProperty(BUCKET) + S3_PATH_SEP + JOB_CONF_PROP_FILE_NAME;
 		String localFilePath = s3wrapper.readOutputFromS3(s3FilePath, JOB_CONF_PROP_FILE_NAME);
 		return Utilities.readPropertyFile(localFilePath);
 	}
 
-	private void map() {
+	private void map() { 
+		log.info("Starting map task");
 		readFiles();
 		processFiles();
+		log.info("All files processed, signalling end of mapper phase");
 		NodeCommWrapper.sendData(masterIp, EOM_URL);
 	}
 
@@ -178,14 +185,14 @@ class SlaveJob implements Runnable {
 		post(FILE_URL, (request, response) -> {
 			masterIp = request.ip();
 			filesToProcess = request.body();
-			response.status(200);
-			response.body("SUCCESS");
+			response.status(OK);
+			response.body(SUCCESS);
 			return response.body().toString();
 		});		
 
 		while (filesToProcess == null) {}
 
-		// TODO test 
+		log.info("Files to process by mapper " + filesToProcess);
 		stop();
 	}
 
@@ -218,6 +225,7 @@ class SlaveJob implements Runnable {
 	}
 
 	private String downloadFile(String file) {
+		
 		String s3FilePath = jobConfiguration.getProperty(INPUT_PATH) + S3_PATH_SEP + file;
 		String localFilePath = IP_OF_MAP + File.separator + file;
 		return s3wrapper.readOutputFromS3(s3FilePath, localFilePath);
@@ -225,6 +233,7 @@ class SlaveJob implements Runnable {
 
 	@SuppressWarnings("rawtypes")
 	private void processFile(String file, Mapper<?, ?, ?, ?> mapper, Context context) {
+		log.info("Processing file " + file);
 		try (BufferedReader br = new BufferedReader(new FileReader(file))){
 			String line = null;
 			long counter = 0l;
@@ -233,16 +242,22 @@ class SlaveJob implements Runnable {
 			}   
 		}
 		catch(Exception e) {
-			// TODO
+			log.severe("Failed to read file " + file + ". Reason: " + e.getMessage());
 		}
 	}
 
 	private Mapper<?, ?, ?, ?> instantiateMapper() {
+		log.info("Instanting Mapper");
 		Mapper<?,?,?,?> mapper = null;
 		try {
-			mapper = (Mapper<?, ?, ?, ?>) getMapreduceClass(MAPPER_CLASS).newInstance();
+			mapper = (Mapper<?, ?, ?, ?>) getMapreduceClass(jobConfiguration.getProperty(MAPPER_CLASS)).newInstance();
+			if (mapper != null) {
+				log.info("Mapper instantiated successfully " + jobConfiguration.getProperty(MAPPER_CLASS));
+			}
 		} catch (InstantiationException | IllegalAccessException e) {
-			// TODO
+			log.severe("Failed to create an instance of mapper class " + mapper 
+					+ ". Reason " + e.getMessage());
+			log.severe("Stacktrace " + Utilities.printStackTrace(e));
 		}
 		return mapper;
 	}
@@ -258,13 +273,17 @@ class SlaveJob implements Runnable {
 					.getMethod(MAP_METHD_NAME, KEYIN, VALUEIN, Mapper.Context.class);
 			mthd.invoke(mapper, keyIn, valueIn, mapper.new Context());
 		} catch (Exception e) {
-			// TODO print e.printstacktrace
+			log.severe("Failed to invoke map method on mapper class " + mapper 
+					+ ". Reason " + e.getMessage());
+			log.severe("Stacktrace " + Utilities.printStackTrace(e));
 		}
 	}
 
 	private void reduce() {
+		log.info("Starting reduce task");
 		readKeys();
 		processKeys();
+		log.info("All keys processed. Signalling end of reducer phase");
 		NodeCommWrapper.sendData(masterIp, EOR_URL);
 	}
 
@@ -276,9 +295,8 @@ class SlaveJob implements Runnable {
 			response.body("SUCCESS");
 			return response.body().toString();
 		});		
-
 		while (keysToProcess == null) {}
-
+		log.info("Keys to process " + keysToProcess);
 		stop();
 	}
 
@@ -301,6 +319,7 @@ class SlaveJob implements Runnable {
 		Reducer<?,?,?,?> reducer = getReducerInstance();
 		Reducer<?, ?, ?, ?>.Context context = reducer.new Context();
 		for (String key: keys) {
+			log.info("Processing key " + key);
 			String keyDirPath = downloadKeyFiles(key);
 			processKey(keyDirPath, key, reducer, context);
 			context.close();
@@ -309,10 +328,12 @@ class SlaveJob implements Runnable {
 	}
 
 	private String downloadKeyFiles(String key) {
+		log.info("Download files for key " + key);
 		String keyDir = (key + KEY_DIR_SUFFIX);
 		String keyDirLocalPath = IP_OF_REDUCE + File.separator + keyDir;
 		String s3KeyDir = BUCKET + S3_PATH_SEP + keyDir;
 		s3wrapper.downloadAndStoreFileInLocal(s3KeyDir, System.getProperty("user.dir"));
+		log.info("key dir local path " + keyDirLocalPath);
 		return keyDirLocalPath;
 	}
 
@@ -324,10 +345,13 @@ class SlaveJob implements Runnable {
 			Method mthdr = getMapreduceClass(jobConfiguration.getProperty(REDUCER_CLASS))
 					.getMethod(REDUCE_METHD_NAME, KEYIN, Iterable.class, Reducer.Context.class);
 			Object keyInst = KEYIN.getConstructor(String.class).newInstance(key);
+			log.info("Invoking reduce method");
 			mthdr.invoke(reducer, keyInst, getIterableValue(keyDirPath, key), context);
 		}
 		catch (Exception e) {
-			// TODO e.printstacktrace
+			log.severe("Failed to invoke reduce method on reduce class " + reducer 
+					+ ". Reason " + e.getMessage());
+			log.severe("Stacktrace " + Utilities.printStackTrace(e));
 		}
 	}
 
@@ -335,20 +359,27 @@ class SlaveJob implements Runnable {
 		Reducer<?, ?, ?, ?> reducer = null;
 		try {
 			reducer = (Reducer<?, ?, ?, ?>) getMapreduceClass(jobConfiguration.getProperty(REDUCER_CLASS)).newInstance();
+			if (reducer != null) {
+				log.info("Reducer class instantiated successfully " + jobConfiguration.getProperty(REDUCER_CLASS));
+			}
 		} catch (InstantiationException | IllegalAccessException e) {
-			// TODO
+			log.severe("Failed to create an instance of reducer class " + reducer 
+					+ ". Reason " + e.getMessage());
+			log.severe("Stacktrace " + Utilities.printStackTrace(e));
 		}
 		return reducer;
 	}
 
 	private Class<?> getMapreduceClass(String className) {
-		Class<?> reducerClass = null;
+		Class<?> mrClass = null;
 		try {
-			reducerClass = Class.forName(className);
+			mrClass = Class.forName(className);
 		} catch (ClassNotFoundException e) {
-			// TODO
+			log.severe("Failed to find class " + className 
+					+ ". Reason " + e.getMessage());
+			log.severe("Stacktrace " + Utilities.printStackTrace(e));
 		}
-		return reducerClass;
+		return mrClass;
 	}
 
 	private Class<?> getReducerInputClass(String className) {
@@ -357,7 +388,9 @@ class SlaveJob implements Runnable {
 			try {
 				c = Class.forName(className);
 			} catch (ClassNotFoundException e) {
-				// TODO
+				log.severe("Failed to find class " + className 
+						+ ". Reason " + e.getMessage());
+				log.severe("Stacktrace " + Utilities.printStackTrace(e));
 			}
 			return c;
 		}
@@ -367,10 +400,13 @@ class SlaveJob implements Runnable {
 	}
 
 	private List<Object> getIterableValue(String keyDirPath, String key) {
+		log.info("Creating iterator for key " + key + " by reading all the file records from " + keyDirPath);
 		File[] files  = new File(keyDirPath).listFiles();
+		log.info("There are " + files.length + " associated with key " + key);
 		List<Object> values = new LinkedList<>();
 		Class<?> VALUEIN = getReducerInputClass(jobConfiguration.getProperty(MAP_OUTPUT_VALUE_CLASS));
 		for (File file : files) {
+			log.info("Fetching all records from file " + file.getAbsolutePath());
 			if (file.getName().startsWith(key)) {
 				try (BufferedReader br = new BufferedReader(new FileReader(file))){
 					String line = null;
@@ -379,7 +415,9 @@ class SlaveJob implements Runnable {
 					}
 				}
 				catch(Exception e) {
-					// TODO
+					log.severe("Failed to create iterable for key " + key 
+							+ ". Reason " + e.getMessage());
+					log.severe("Stacktrace " + Utilities.printStackTrace(e));
 				}
 			}
 		}
@@ -387,10 +425,12 @@ class SlaveJob implements Runnable {
 	}
 
 	private void tearDown() {
+		log.info("Shutting off Unirest process");
 		try {
 			Unirest.shutdown();
 		} catch (IOException e) {
-			// TODO
+			log.severe("Failed to shutdown Unirest process. Reason " + e.getMessage());
+			log.severe("Stacktrace " + Utilities.printStackTrace(e));
 		}
 	}
 }
