@@ -5,9 +5,11 @@ import static org.apache.hadoop.Constants.JobConf.REDUCER_OP_SEPARATOR;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.logging.Logger;
 
 public class Configuration {
 
+	private static final Logger log = Logger.getLogger(Configuration.class.getName());
 	private Map<String, String> properties;
 
 	public Configuration() {
@@ -17,6 +19,7 @@ public class Configuration {
 
 	public void set(String key, String value) {
 		properties.put(key, value);
+		log.info("Setting job config property with key " + key + " and value as " + value);
 	}
 
 	public Map<String, String> getMap() {
@@ -24,6 +27,8 @@ public class Configuration {
 	}
 
 	public String get(String key) {
-		return properties.get(key);
+		String value = properties.get(key); 
+		log.info("Property fetched with key " + key + "and value as " + value);
+		return value;
 	}
 }

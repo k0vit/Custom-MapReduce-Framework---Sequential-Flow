@@ -19,10 +19,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Random;
+import java.util.logging.Logger;
 
 import neu.edu.mapreduce.common.Node;
 public class Utilities {
-
+	
+	private static final Logger log = Logger.getLogger(Utilities.class.getName());
+	
 	private Utilities() {};
 
 	public static List<Node> readInstanceDetails() {
@@ -39,8 +42,10 @@ public class Utilities {
 			br.close();
 		}
 		catch (Exception e) {
-			// TODO
+			log.severe("Failed to read the instance details file. Reason " + e.getMessage());
 		}
+		
+		log.info("Nodes " + nodeLst);
 		return nodeLst;
 	}
 
@@ -49,6 +54,7 @@ public class Utilities {
 	}
 
 	public static Properties readPropertyFile(String localFilePath) {
+		log.info("Reading property file from " + localFilePath);
 		Properties prop = new Properties();
 		InputStream input = null;
 		try {
@@ -57,7 +63,8 @@ public class Utilities {
 			input.close();
 		}
 		catch (Exception e) {
-			// TODO
+			log.severe("Failed to load configuration file from " + localFilePath + 
+					". Reason: " + e.getMessage());
 		}
 		return prop;
 	}
@@ -83,7 +90,7 @@ public class Utilities {
 		try {
 			ip = InetAddress.getLocalHost().getHostAddress();
 		} catch (UnknownHostException e) {
-			// TODO 
+			log.severe("Failed to get local host address. Reason: " + e.getMessage());
 		}
 
 		for (Node node: nodes) {
@@ -95,8 +102,8 @@ public class Utilities {
 		return String.valueOf(new Random().nextInt(100));
 	}
 
-	// TODO test it
 	public static void deleteFolder(File folder) {
+		log.info("Deleting folder " + folder.getAbsolutePath());
 		File[] files = folder.listFiles();
 		if(files!=null) {
 			for(File f: files) {
@@ -108,6 +115,7 @@ public class Utilities {
 			}
 		}
 		folder.delete();
+		log.info("Folder deleted ? " + !folder.exists());
 	}
 
 	public static void createDirs(String inputDir, String outputDir) {

@@ -181,7 +181,7 @@ public class S3Wrapper {
 		try {
 			d.waitForCompletion();
 		} catch (AmazonClientException | InterruptedException e) {
-			log.severe("Downloading failed from " + s3Path);
+			log.severe("Downloading failed from " + s3Path + ". Reason: " + e.getMessage());
 		}
 		log.info("File downloaded successfully from " + s3Path + " to " + localDir);
 	}
