@@ -13,8 +13,7 @@ import static org.apache.hadoop.Constants.JobConf.REDUCER_CLASS;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.LongWritable;
-
-import com.sun.xml.internal.ws.policy.privateutil.PolicyUtils.Text;
+import org.apache.hadoop.io.Text;
 
 import neu.edu.mapreduce.master.Master;
 
