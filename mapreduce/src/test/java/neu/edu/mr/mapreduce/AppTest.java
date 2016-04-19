@@ -1,8 +1,27 @@
 package neu.edu.mr.mapreduce;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.apache.hadoop.io.LongWritable;
+import org.apache.hadoop.io.Text;
+import org.apache.hadoop.mapreduce.Mapper;
+import org.apache.hadoop.mapreduce.Reducer;
+
+import com.amazonaws.auth.BasicAWSCredentials;
+import com.amazonaws.services.s3.AmazonS3Client;
+
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
+import neu.edu.mapreduce.common.Node;
+import neu.edu.utilities.S3File;
+import neu.edu.utilities.S3Wrapper;
+import neu.edu.utilities.Utilities;
 
 /**
  * Unit test for simple App.
@@ -28,7 +47,7 @@ extends TestCase
 		return new TestSuite( AppTest.class );
 	}
 
-	/*public void testFileDistr() {
+	public void testFileDistr() {
 		List<Node> nodes = new ArrayList<>();
 		Node n = new Node("", "", "S", "1");
 		Node n2 = new Node("", "", "S", "2");
@@ -115,9 +134,9 @@ extends TestCase
 		}
 	}
 
-	*//**
+	/**
 	 * Rigourous Test :-)
-	 *//*
+	 */
 	@SuppressWarnings("rawtypes")
 	public void testApp()
 	{
@@ -130,8 +149,8 @@ extends TestCase
 			Mapper<?,?,?,?> mapper = (Mapper<?, ?, ?, ?>) mapperClass.newInstance();
 			java.lang.reflect.Method mthd = mapperClass.getMethod("map", KEYIN, VALUEIN, Mapper.Context.class);
 			mthd.invoke(mapper, keyIn, valueIn, mapper.new Context());
-			List<Text> k = new ArrayList<>();
-			k.add(new Text("value"));
+			List<Object> k = new ArrayList<>();
+			k.add(valueIn);
 
 			Reducer<?,?,?,?> reducer = (Reducer<?, ?, ?, ?>) TestReducer.class.newInstance();
 			java.lang.reflect.Method mthdr = TestReducer.class.getMethod
@@ -204,5 +223,5 @@ class NodeToTask implements Comparable<NodeToTask>{
 	public String toString() {
 		return "NodeToTask [node=" + node + ", totalSize=" + totalSize
 				+ ", taskLst=" + taskLst + "]";
-	}*/
+	}
 }

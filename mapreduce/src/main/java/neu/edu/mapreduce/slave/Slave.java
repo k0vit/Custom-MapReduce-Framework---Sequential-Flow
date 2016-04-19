@@ -16,6 +16,8 @@ import static org.apache.hadoop.Constants.FileConfig.S3_PATH_SEP;
 import static org.apache.hadoop.Constants.FileConfig.TASK_SPLITTER;
 import static org.apache.hadoop.Constants.JobConf.INPUT_PATH;
 import static org.apache.hadoop.Constants.JobConf.MAPPER_CLASS;
+import static org.apache.hadoop.Constants.JobConf.MAP_OUTPUT_KEY_CLASS;
+import static org.apache.hadoop.Constants.JobConf.MAP_OUTPUT_VALUE_CLASS;
 import static org.apache.hadoop.Constants.JobConf.REDUCER_CLASS;
 import static org.apache.hadoop.Constants.MapReduce.MAP_METHD_NAME;
 import static org.apache.hadoop.Constants.MapReduce.REDUCE_METHD_NAME;
@@ -27,6 +29,8 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.lang.reflect.Method;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Properties;
 import java.util.logging.Logger;
 
@@ -236,27 +240,13 @@ class SlaveJob implements Runnable {
 	}
 
 	private Mapper<?, ?, ?, ?> instantiateMapper() {
-
-		Class<?> mapperClass = getMapperClass();
-
 		Mapper<?,?,?,?> mapper = null;
 		try {
-			mapper = (Mapper<?, ?, ?, ?>) mapperClass.newInstance();
+			mapper = (Mapper<?, ?, ?, ?>) getMapreduceClass(MAPPER_CLASS).newInstance();
 		} catch (InstantiationException | IllegalAccessException e) {
 			// TODO
 		}
-
 		return mapper;
-	}
-
-	private Class<?> getMapperClass() {
-		Class<?> mapperClass = null;
-		try {
-			mapperClass = Class.forName(jobConfiguration.getProperty(MAPPER_CLASS));
-		} catch (ClassNotFoundException e) {
-			// TODO
-		}
-		return mapperClass;
 	}
 
 	@SuppressWarnings("rawtypes")
@@ -266,7 +256,8 @@ class SlaveJob implements Runnable {
 			Object keyIn = KEYIN.getConstructor(Long.class).newInstance(counter);
 			Class<?> VALUEIN = Class.forName(Text.class.getName());
 			Object valueIn = VALUEIN.getConstructor(String.class).newInstance(line);
-			java.lang.reflect.Method mthd = getMapperClass().getMethod(MAP_METHD_NAME, KEYIN, VALUEIN, Mapper.Context.class);
+			java.lang.reflect.Method mthd = getMapreduceClass(jobConfiguration.getProperty(MAPPER_CLASS))
+					.getMethod(MAP_METHD_NAME, KEYIN, VALUEIN, Mapper.Context.class);
 			mthd.invoke(mapper, keyIn, valueIn, mapper.new Context());
 		} catch (Exception e) {
 			// TODO print e.printstacktrace
@@ -327,10 +318,12 @@ class SlaveJob implements Runnable {
 	private void processKey(String keyDirPath, String key) {
 		Reducer<?,?,?,?> reducer = getReducerInstance();
 		Reducer<?, ?, ?, ?>.Context context = reducer.new Context();
-		Class<?> KEYIN = getReducerKeyInClass();
+		Class<?> KEYIN = getReducerInputClass(jobConfiguration.getProperty(MAP_OUTPUT_KEY_CLASS));
 		try {
-			Method mthdr = getReducerClass().getMethod(REDUCE_METHD_NAME, KEYIN, Iterable.class, Reducer.Context.class);
-			mthdr.invoke(reducer, getKey(key), getIterableValue(keyDirPath), context);
+			Method mthdr = getMapreduceClass(jobConfiguration.getProperty(REDUCER_CLASS))
+					.getMethod(REDUCE_METHD_NAME, KEYIN, Iterable.class, Reducer.Context.class);
+			Object keyInst = KEYIN.getConstructor(String.class).newInstance(key);
+			mthdr.invoke(reducer, keyInst, getIterableValue(keyDirPath), context);
 		}
 		catch (Exception e) {
 			// TODO e.printstacktrace
@@ -341,43 +334,57 @@ class SlaveJob implements Runnable {
 	private Reducer<?, ?, ?, ?> getReducerInstance() {
 		Reducer<?, ?, ?, ?> reducer = null;
 		try {
-			reducer = (Reducer<?, ?, ?, ?>) getReducerClass().newInstance();
+			reducer = (Reducer<?, ?, ?, ?>) getMapreduceClass(jobConfiguration.getProperty(REDUCER_CLASS)).newInstance();
 		} catch (InstantiationException | IllegalAccessException e) {
 			// TODO
 		}
 		return reducer;
 	}
 
-	private Class<?> getReducerClass() {
+	private Class<?> getMapreduceClass(String className) {
 		Class<?> reducerClass = null;
 		try {
-			reducerClass = Class.forName(jobConfiguration.getProperty(REDUCER_CLASS));
+			reducerClass = Class.forName(className);
 		} catch (ClassNotFoundException e) {
 			// TODO
 		}
 		return reducerClass;
 	}
 
-	private Class<?> getReducerKeyInClass() {
-		// TODO Auto-generated method stub
-		return null;
+	private Class<?> getReducerInputClass(String className) {
+		if (className != null) {
+			Class<?> c = null;  
+			try {
+				c = Class.forName(className);
+			} catch (ClassNotFoundException e) {
+				// TODO
+			}
+			return c;
+		}
+		else {
+			return Text.class;
+		}
 	}
 
-	private Object getKey() {
-		// TODO Auto-generated method stub
-		return null;
+	private List<Object> getIterableValue(String keyDirPath) {
+		File[] files  = new File(keyDirPath).listFiles();
+		List<Object> values = new LinkedList<>();
+		Class<?> VALUEIN = getReducerInputClass(jobConfiguration.getProperty(MAP_OUTPUT_VALUE_CLASS));
+		for (File file : files) {
+			try (BufferedReader br = new BufferedReader(new FileReader(file))){
+				String line = null;
+				while((line = br.readLine()) != null) {
+					values.add(VALUEIN.getConstructor(String.class).newInstance(line));
+				}
+			}
+			catch(Exception e) {
+				// TODO
+			}
+		}
+		
+		return values;
 	}
-
-	private Object getIterableValue(String keyDirPath) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	private Object getKey(String key) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
+	
 	private void tearDown() {
 		try {
 			Unirest.shutdown();
