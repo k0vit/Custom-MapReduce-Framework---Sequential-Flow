@@ -5,6 +5,7 @@ import static org.apache.hadoop.Constants.FileConfig.JOB_CONF_PROP_FILE_NAME;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
+import java.util.logging.Logger;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.IntWritable;
@@ -13,12 +14,14 @@ import neu.edu.utilities.Utilities;
 
 public class BaseContext<KEYIN,VALUEIN,KEYOUT,VALUEOUT> implements IContext<KEYIN,VALUEIN,KEYOUT,VALUEOUT> {
 	
+	private static final Logger log = Logger.getLogger(BaseContext.class.getName());
+	
 	private Map<String, Map<String, IntWritable>> counter = new HashMap<>();
 	private Configuration config;
 	
 	@Override
 	public void write(KEYOUT key, VALUEOUT value) {
-		System.out.println(key + " " + value);
+		log.info("Base Context " + key + " " + value);
 	}
 	
 	public IntWritable getCounter(String group, String counterName) {

@@ -301,14 +301,14 @@ class SlaveJob implements Runnable {
 		Reducer<?,?,?,?> reducer = getReducerInstance();
 		Reducer<?, ?, ?, ?>.Context context = reducer.new Context();
 		for (String key: keys) {
-			String keyDirPath = downloadKey(key);
+			String keyDirPath = downloadKeyFiles(key);
 			processKey(keyDirPath, key, reducer, context);
 			context.close();
 			Utilities.deleteFolder(new File(keyDirPath));
 		}
 	}
 
-	private String downloadKey(String key) {
+	private String downloadKeyFiles(String key) {
 		String keyDir = (key + KEY_DIR_SUFFIX);
 		String keyDirLocalPath = IP_OF_REDUCE + File.separator + keyDir;
 		String s3KeyDir = BUCKET + S3_PATH_SEP + keyDir;
@@ -318,13 +318,13 @@ class SlaveJob implements Runnable {
 
 	private void processKey(String keyDirPath, String key, Reducer<?, ?, ?, ?> reducer,
 			Reducer<?, ?, ?, ?>.Context context) {
-		
+
 		Class<?> KEYIN = getReducerInputClass(jobConfiguration.getProperty(MAP_OUTPUT_KEY_CLASS));
 		try {
 			Method mthdr = getMapreduceClass(jobConfiguration.getProperty(REDUCER_CLASS))
 					.getMethod(REDUCE_METHD_NAME, KEYIN, Iterable.class, Reducer.Context.class);
 			Object keyInst = KEYIN.getConstructor(String.class).newInstance(key);
-			mthdr.invoke(reducer, keyInst, getIterableValue(keyDirPath), context);
+			mthdr.invoke(reducer, keyInst, getIterableValue(keyDirPath, key), context);
 		}
 		catch (Exception e) {
 			// TODO e.printstacktrace
@@ -366,25 +366,26 @@ class SlaveJob implements Runnable {
 		}
 	}
 
-	private List<Object> getIterableValue(String keyDirPath) {
+	private List<Object> getIterableValue(String keyDirPath, String key) {
 		File[] files  = new File(keyDirPath).listFiles();
 		List<Object> values = new LinkedList<>();
 		Class<?> VALUEIN = getReducerInputClass(jobConfiguration.getProperty(MAP_OUTPUT_VALUE_CLASS));
 		for (File file : files) {
-			try (BufferedReader br = new BufferedReader(new FileReader(file))){
-				String line = null;
-				while((line = br.readLine()) != null) {
-					values.add(VALUEIN.getConstructor(String.class).newInstance(line));
+			if (file.getName().startsWith(key)) {
+				try (BufferedReader br = new BufferedReader(new FileReader(file))){
+					String line = null;
+					while((line = br.readLine()) != null) {
+						values.add(VALUEIN.getConstructor(String.class).newInstance(line));
+					}
+				}
+				catch(Exception e) {
+					// TODO
 				}
 			}
-			catch(Exception e) {
-				// TODO
-			}
 		}
-		
 		return values;
 	}
-	
+
 	private void tearDown() {
 		try {
 			Unirest.shutdown();

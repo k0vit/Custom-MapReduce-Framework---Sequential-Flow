@@ -13,6 +13,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Properties;
+import java.util.logging.Logger;
 
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.services.s3.AmazonS3Client;
@@ -32,6 +33,7 @@ import neu.edu.utilities.Utilities;
  * @param <VALUEOUT>
  */
 public class Reducer<KEYIN,VALUEIN,KEYOUT,VALUEOUT> {
+	private static final Logger log = Logger.getLogger(Reducer.class.getName());
 
 	public class Context extends BaseContext<KEYIN, VALUEIN, KEYOUT, VALUEOUT> {
 		BufferedWriter bw;
@@ -46,16 +48,19 @@ public class Reducer<KEYIN,VALUEIN,KEYOUT,VALUEOUT> {
 			s3wrapper = new S3Wrapper(new AmazonS3Client(new BasicAWSCredentials
 					(clusterProperties.getProperty(ACCESS_KEY), clusterProperties.getProperty(SECRET_KEY))));
 			slaveId = Utilities.getSlaveId(Utilities.readInstanceDetails());
-
+			log.info("Initializing reduce with slave id " + slaveId);
+			
 			initializeBufferedWriter();
 		}
 
 		private void initializeBufferedWriter() {
-			fileFullPath = OP_OF_REDUCE + PART_FILE_PREFIX + slaveId + counter;
+			fileFullPath = OP_OF_REDUCE + File.separator + PART_FILE_PREFIX + slaveId + counter;
 			try {
+				log.info("Creating file " + fileFullPath);
 				bw = new BufferedWriter(new FileWriter(fileFullPath));
 			} catch (IOException e) {
-				// TODO
+				log.severe("Failed to create BufferedWriter for file " + fileFullPath 
+						+ ". Reason: " + e.getMessage());
 			}
 		}
 
@@ -64,7 +69,8 @@ public class Reducer<KEYIN,VALUEIN,KEYOUT,VALUEOUT> {
 			try {
 				bw.write(key.toString() + getConfiguration().get(REDUCER_OP_SEPARATOR) + value.toString());
 			} catch (IOException e) {
-				// TODO
+				log.severe("Failed to write record with key as " + key.toString() + " and value as " 
+						+ value.toString() + ". Reason: " + e.getMessage());
 			}
 		}
 
@@ -72,8 +78,9 @@ public class Reducer<KEYIN,VALUEIN,KEYOUT,VALUEOUT> {
 			try {
 				bw.close();
 			} catch (IOException e) {
-				// TODO
+				log.severe("Failed to close buffered writer for Reason " + e.getMessage());
 			}
+			
 			uploadToS3();
 			counter++;
 			initializeBufferedWriter();
@@ -82,6 +89,7 @@ public class Reducer<KEYIN,VALUEIN,KEYOUT,VALUEOUT> {
 		private void uploadToS3() {
 			File fileToUpload = new File(fileFullPath);
 			String s3FullPath = clusterProperties.getProperty(BUCKET) + S3_PATH_SEP + fileToUpload.getName();
+			log.info("Upload reducer output from " + fileFullPath + " to " + s3FullPath) ;
 			s3wrapper.uploadFileS3(s3FullPath, fileToUpload);
 		}
 	}

@@ -16,6 +16,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
+import java.util.logging.Logger;
 
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.services.s3.AmazonS3Client;
@@ -24,6 +25,8 @@ import neu.edu.utilities.S3Wrapper;
 import neu.edu.utilities.Utilities;
 
 public class Mapper<KEYIN, VALUEIN, KEYOUT, VALUEOUT> {
+
+	private static final Logger log = Logger.getLogger(Mapper.class.getName());
 
 	/**
 	 * Context.write of Mapper [context.write(key, value)]
@@ -51,6 +54,7 @@ public class Mapper<KEYIN, VALUEIN, KEYOUT, VALUEOUT> {
 			s3wrapper = new S3Wrapper(new AmazonS3Client(new BasicAWSCredentials
 					(clusterProperties.getProperty(ACCESS_KEY), clusterProperties.getProperty(SECRET_KEY))));
 			slaveId = Utilities.getSlaveId(Utilities.readInstanceDetails());
+			log.info("Initializing mapper with Slave id " + slaveId);
 		}
 
 		@Override
@@ -58,19 +62,25 @@ public class Mapper<KEYIN, VALUEIN, KEYOUT, VALUEOUT> {
 			if (!keyToFile.containsKey(key)) {
 				String filePath = System.getProperty("user.dir") + File.separator + OP_OF_MAP + File.separator
 						+ key + KEY_DIR_SUFFIX + File.separator + key + "_" +
-						new SimpleDateFormat("yyyyMMddhhmm'.txt'").format(new Date()) + slaveId;
+						(new SimpleDateFormat("yyyyMMddhhmm'.txt'").format(new Date())) + slaveId;
 
 				try {
+					log.info("Creating mapper output file " + filePath);
+					File f = new File(filePath);
+					if (!f.exists()) {
+						f.createNewFile();
+					}
 					keyToFile.put(key.toString(), new BufferedWriter(new FileWriter(filePath)));
 				} catch (IOException e) {
-					// TODO
+					log.severe("Failed to create file " + filePath + ". Reason " + e.getMessage());
 				}
 			}
 
 			try {
 				keyToFile.get(key.toString()).write(value.toString() + System.getProperty("line.separator"));
 			} catch (IOException e) {
-				// TODO
+				log.severe("Failed to write " + value.toString() + " for key " + key.toString()
+				+ "Reason " + e.getMessage());
 			}
 		}
 
@@ -86,13 +96,14 @@ public class Mapper<KEYIN, VALUEIN, KEYOUT, VALUEOUT> {
 				try {
 					bw.close();
 				} catch (IOException e) {
-					// TODO
+					log.severe("Failed to close buffered writer for key " + key + ". Reason " + e.getMessage());
 				}
 			}
 		}
 
 		private void uploadToS3() {
 			for(String key: keyToFile.keySet()) {
+				log.info("uploading mapper output file with respect to key " + key);
 				String keyDir = (key + KEY_DIR_SUFFIX);
 				String prefix = IP_OF_REDUCE + File.separator + keyDir;
 				String bucket = getConfiguration().get(BUCKET);
@@ -102,8 +113,10 @@ public class Mapper<KEYIN, VALUEIN, KEYOUT, VALUEOUT> {
 					File[] files = dir.listFiles();
 					if (files != null) {
 						for (File file: dir.listFiles()) {
-							String s3FullPath = bucket + prefix + file.getName();
-							s3wrapper.uploadFileS3(s3FullPath, file);
+							if (file.getName().startsWith(key)) {
+								String s3FullPath = bucket + prefix + file.getName();
+								s3wrapper.uploadFileS3(s3FullPath, file);
+							}
 						}
 					}
 				}
