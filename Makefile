@@ -1,4 +1,4 @@
-dist_sort:
+run:
 	rm -rf ec2key.pem
 	rm -rf instancedetails.csv
 	rm -rf slave-*.txt
