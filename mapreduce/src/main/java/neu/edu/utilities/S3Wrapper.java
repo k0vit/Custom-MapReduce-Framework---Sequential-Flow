@@ -4,7 +4,6 @@ import static org.apache.hadoop.Constants.FileConfig.S3_PATH_SEP;
 import static org.apache.hadoop.Constants.FileConfig.S3_URL;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
@@ -81,20 +80,21 @@ public class S3Wrapper {
 		int index = simplifiedPath.indexOf(S3_PATH_SEP);
 		String bucketName = simplifiedPath.substring(0, index);
 		String key = simplifiedPath.substring(index + 1);
-		log.info(String.format("[%s] Downloaded file with Bucket Name: %s Key: %s ", localFilePath, bucketName, key));
-		log.info("CURRENT USER DIRECTORY: " + System.getProperty("user.dir"));
+		log.info(String.format("Downloading file with Bucket Name: %s Key: %s to local dir %s",
+				bucketName, key, localFilePath));
 		Download d = tx.download(bucketName, key, new File(localFilePath));
 		try {
 			d.waitForCompletion();
 		} catch (AmazonClientException | InterruptedException e) {
 			log.severe("Failed downloading the file " + localFilePath + ". Reason " + e.getMessage());
 		}
+		log.info("Downloading completed successfully to " + localFilePath);
 		tx.shutdownNow();
 		return localFilePath;
 	}
 
 	/**
-	 * upload given file to the output path specified.
+	 * upload given file to root dir i.e. bucket
 	 * 
 	 * @param file
 	 *            File to be uploaded.
@@ -102,7 +102,7 @@ public class S3Wrapper {
 	 *            bucket name e.g. s3://kovit
 	 * @return true if uploaded successfully.
 	 */
-	public boolean uploadFile(String file, String bucket) {
+	public boolean uploadFileToBucket(String file, String bucket) {
 		File local = new File(file);
 		if (!(local.exists() && local.canRead() && local.isFile())) {
 			return false;
@@ -140,7 +140,7 @@ public class S3Wrapper {
 	 */
 	public String downloadAndStoreFileInLocal(String inputDirS3Path, String fileString) {
 		String s3FullPath = inputDirS3Path + "/" + fileString;
-		log.info(String.format("[%s] Downloading from s3 full path: %s", fileString, s3FullPath));
+		log.info(String.format("Downloading from s3 full path: %s to local dir %s", s3FullPath, fileString));
 		readOutputFromS3(s3FullPath, fileString);
 		return fileString;
 	}
@@ -159,6 +159,7 @@ public class S3Wrapper {
 		int index = simplifiedPath.indexOf(S3_PATH_SEP);
 		String bucketName = simplifiedPath.substring(0, index);
 		String key = simplifiedPath.substring(index + 1);
+		log.info("Uploading file " + file.getAbsolutePath() + " to bucket " + bucketName + " with key as " + key);
 		Upload up = tx.upload(bucketName, key, file);
 		try {
 			up.waitForCompletion();
@@ -170,12 +171,18 @@ public class S3Wrapper {
 		return true;
 	}
 	
-	public void downloadDir(String s3Path, String localDir) throws IOException, InterruptedException {
+	public void downloadDir(String s3Path, String localDir) {
 		TransferManager tx = new TransferManager(s3client); 
 		String simplifiedPath = (s3Path.replace(S3_URL, ""));
 		String bucketName = simplifiedPath.substring(0, simplifiedPath.indexOf(S3_PATH_SEP));
 		String key = simplifiedPath.substring(simplifiedPath.indexOf(S3_PATH_SEP) + 1);
+		log.info("Downloading file from " + bucketName + " and key as " + key + " to local dir " + localDir);
 		MultipleFileDownload d = tx.downloadDirectory(bucketName, key, new File(localDir));
-		d.waitForCompletion();
+		try {
+			d.waitForCompletion();
+		} catch (AmazonClientException | InterruptedException e) {
+			log.severe("Downloading failed from " + s3Path);
+		}
+		log.info("File downloaded successfully from " + s3Path + " to " + localDir);
 	}
 }

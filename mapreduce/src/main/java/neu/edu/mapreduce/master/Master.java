@@ -116,7 +116,7 @@ public class Master {
 				writer.println(sb.toString());
 			}
 			writer.close();
-			s3wrapper.uploadFile(JOB_CONF_PROP_FILE_NAME, clusterProperties.getProperty(BUCKET));
+			s3wrapper.uploadFileToBucket(JOB_CONF_PROP_FILE_NAME, clusterProperties.getProperty(BUCKET));
 		}
 		catch (Exception e) {
 			log.severe("Failed to read job configuration file. Reason:" + e.getMessage());

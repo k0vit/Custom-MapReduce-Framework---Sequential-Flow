@@ -31,7 +31,7 @@ public class NodeCommWrapper {
 			log.severe("Exception sending post request: " + e.getMessage());
 			log.severe("RETRY sending file");
 			try {
-				Thread.sleep(20000);
+				Thread.sleep(30000);
 			} catch (InterruptedException e1) {
 				log.info(e1.getMessage());
 			}
