@@ -137,7 +137,6 @@ class SlaveJob implements Runnable {
 	private static final Logger log = Logger.getLogger(SlaveJob.class.getName());
 
 	private Properties clusterProperties;
-	private String slaveId;
 	private S3Wrapper s3wrapper;
 	private Properties jobConfiguration;
 	private String masterIp;
@@ -160,7 +159,6 @@ class SlaveJob implements Runnable {
 				(clusterProperties.getProperty(ACCESS_KEY), clusterProperties.getProperty(SECRET_KEY))));
 
 		clusterProperties = Utilities.readClusterProperties();
-		slaveId = Utilities.getSlaveId(Utilities.readInstanceDetails());
 		jobConfiguration = downloadAndReadJobConfig();
 	}
 
@@ -205,12 +203,16 @@ class SlaveJob implements Runnable {
 	 * ---- upload the contents on s3 (Mapper Context does that as it has the file name)0
 	 * ---- delete the file
 	 */
+	@SuppressWarnings("rawtypes")
 	private void processFiles() {
 		Utilities.createDirs(IP_OF_MAP, OP_OF_MAP);
 		String files[] = filesToProcess.split(TASK_SPLITTER);
+		Mapper<?,?,?,?> mapper = instantiateMapper();
+		Context context = mapper.new Context();
 		for (String file: files) {
 			String localFilePath = downloadFile(file);
-			processFile(localFilePath);
+			processFile(localFilePath, mapper, context);
+			context.close();
 			new File(localFilePath).delete();
 		}
 	}
@@ -222,11 +224,7 @@ class SlaveJob implements Runnable {
 	}
 
 	@SuppressWarnings("rawtypes")
-	private void processFile(String file) {
-
-		Mapper<?,?,?,?> mapper = instantiateMapper();
-		Context context = mapper.new Context();
-
+	private void processFile(String file, Mapper<?, ?, ?, ?> mapper, Context context) {
 		try (BufferedReader br = new BufferedReader(new FileReader(file))){
 			String line = null;
 			long counter = 0l;
@@ -237,8 +235,6 @@ class SlaveJob implements Runnable {
 		catch(Exception e) {
 			// TODO
 		}
-
-		context.close();
 	}
 
 	private Mapper<?, ?, ?, ?> instantiateMapper() {
@@ -302,9 +298,12 @@ class SlaveJob implements Runnable {
 	private void processKeys() {
 		Utilities.createDirs(IP_OF_REDUCE, OP_OF_REDUCE);
 		String[] keys = keysToProcess.split(TASK_SPLITTER);
+		Reducer<?,?,?,?> reducer = getReducerInstance();
+		Reducer<?, ?, ?, ?>.Context context = reducer.new Context();
 		for (String key: keys) {
 			String keyDirPath = downloadKey(key);
-			processKey(keyDirPath, key);
+			processKey(keyDirPath, key, reducer, context);
+			context.close();
 			Utilities.deleteFolder(new File(keyDirPath));
 		}
 	}
@@ -317,9 +316,9 @@ class SlaveJob implements Runnable {
 		return keyDirLocalPath;
 	}
 
-	private void processKey(String keyDirPath, String key) {
-		Reducer<?,?,?,?> reducer = getReducerInstance();
-		Reducer<?, ?, ?, ?>.Context context = reducer.new Context();
+	private void processKey(String keyDirPath, String key, Reducer<?, ?, ?, ?> reducer,
+			Reducer<?, ?, ?, ?>.Context context) {
+		
 		Class<?> KEYIN = getReducerInputClass(jobConfiguration.getProperty(MAP_OUTPUT_KEY_CLASS));
 		try {
 			Method mthdr = getMapreduceClass(jobConfiguration.getProperty(REDUCER_CLASS))
@@ -330,7 +329,6 @@ class SlaveJob implements Runnable {
 		catch (Exception e) {
 			// TODO e.printstacktrace
 		}
-		context.close();
 	}
 
 	private Reducer<?, ?, ?, ?> getReducerInstance() {

@@ -77,6 +77,7 @@ public class Mapper<KEYIN, VALUEIN, KEYOUT, VALUEOUT> {
 		public void close() {
 			closeAllFileWriter();
 			uploadToS3();
+			keyToFile.clear();
 		}
 
 		private void closeAllFileWriter() {

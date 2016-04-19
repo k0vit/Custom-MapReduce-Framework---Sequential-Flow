@@ -14,6 +14,8 @@ public class Constants {
 		public static final String JAR_BY_CLASS = "JarByClass";
 		public static final String MAPPER_INPUT_KEY_CLASS = "MapperInputKeyClass";
 		public static final String MAPPER_INPUT_VALUE_CLASS = "MapperInputValueClass";
+		public static final String REDUCER_OP_SEPARATOR = "mapreduce.output.textoutputformat.separator";
+		public static final String DEFAULT_REDUCER_OP_SEPARATOR = " ";
 	}
 
 	public static class FileConfig {
@@ -30,6 +32,7 @@ public class Constants {
 		public static final String IP_OF_MAP = "InputOfMap";
 		public static final String IP_OF_REDUCE = "InputOfReducer";
 		public static final String OP_OF_REDUCE = "OutputOfReducer";
+		public static final String PART_FILE_PREFIX = "part-r-";
 	}
 
 	public static class ClusterProperties {
