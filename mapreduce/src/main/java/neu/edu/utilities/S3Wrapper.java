@@ -34,6 +34,7 @@ public class S3Wrapper {
 	}
 	
 	public List<S3File> getListOfObjects(String s3InputPath) {
+		log.info("Getting list of objects from " + s3InputPath);
 		String simplifiedPath = removeS3(s3InputPath);
 		int index = simplifiedPath.indexOf(S3_PATH_SEP);
 		String bucketName = simplifiedPath.substring(0, index);
@@ -110,6 +111,7 @@ public class S3Wrapper {
 		String remote = local.getName();
 		try {
 			s3client.putObject(new PutObjectRequest(folder, remote, local));
+			log.info("Uploaded file " + file + " to s3 location " + bucket);
 		} catch (Exception e) {
 			log.severe("Failed to upload file: " + local.getName() + " :" + e.getMessage());
 		}
