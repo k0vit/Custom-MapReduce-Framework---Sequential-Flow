@@ -34,4 +34,4 @@ do
         fi
 done < InstanceDetails.csv
 
-ssh -i ec2key.pem -o "UserKnownHostsFile=/dev/null" -o "StrictHostKeyChecking=no" ec2-user@$masterip "java -cp ~/*.jar:. $main $args 2>&1" > master-$msaterip-output.txt
+ssh -i ec2key.pem -o "UserKnownHostsFile=/dev/null" -o "StrictHostKeyChecking=no" ec2-user@$masterip "java -cp ~/*.jar:. $main $args 2>&1" > master-$masterip-output.txt
