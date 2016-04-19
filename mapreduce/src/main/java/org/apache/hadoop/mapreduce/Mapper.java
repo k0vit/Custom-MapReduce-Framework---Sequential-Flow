@@ -124,12 +124,12 @@ public class Mapper<KEYIN, VALUEIN, KEYOUT, VALUEOUT> {
 		}
 	}
 
-	public void setup(Context context) throws IOException, InterruptedException {};
+	protected void setup(Context context) throws IOException, InterruptedException {};
 
 	@SuppressWarnings("unchecked")
-	public void map(KEYIN key, VALUEIN value, Context context) throws IOException, InterruptedException {
+	protected void map(KEYIN key, VALUEIN value, Context context) throws IOException, InterruptedException {
 		context.write((KEYOUT) key, (VALUEOUT) value); 
 	}
 
-	public void cleanup(Context context) throws IOException, InterruptedException {}
+	protected void cleanup(Context context) throws IOException, InterruptedException {}
 }

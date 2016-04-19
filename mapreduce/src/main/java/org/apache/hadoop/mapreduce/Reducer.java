@@ -94,14 +94,14 @@ public class Reducer<KEYIN,VALUEIN,KEYOUT,VALUEOUT> {
 		}
 	}
 
-	public void setup(Context context) throws IOException, InterruptedException {};
+	protected void setup(Context context) throws IOException, InterruptedException {};
 
 	@SuppressWarnings("unchecked")
-	public void reduce(KEYIN key, Iterable<VALUEIN> values, Context context) throws IOException, InterruptedException {
+	protected void reduce(KEYIN key, Iterable<VALUEIN> values, Context context) throws IOException, InterruptedException {
 		for (VALUEIN value : values) {
 			context.write((KEYOUT) key, (VALUEOUT) value);
 		}
 	};
 
-	public void cleanup(Context context) throws IOException, InterruptedException {}
+	protected void cleanup(Context context) throws IOException, InterruptedException {}
 }

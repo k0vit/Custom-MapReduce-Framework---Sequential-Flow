@@ -75,7 +75,7 @@ import neu.edu.utilities.Utilities;
  * ---- call the map method 
  * -- once the file is done 
  * ---- call the close on Context to close all the FileWriter (check Context.write on Mapper below)
- * ---- upload the contents on s3
+ * ---- upload the contents on s3 - done in context class
  * ---- delete the file
  * 
  * 5) 
