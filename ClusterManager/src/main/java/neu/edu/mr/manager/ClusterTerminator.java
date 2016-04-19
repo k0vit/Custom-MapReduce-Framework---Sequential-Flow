@@ -1,7 +1,6 @@
 package neu.edu.mr.manager;
 
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.FileReader;
 import java.util.ArrayList;
 import java.util.List;
@@ -17,7 +16,6 @@ import com.amazonaws.services.ec2.model.DescribeInstancesResult;
 import com.amazonaws.services.ec2.model.Instance;
 import com.amazonaws.services.ec2.model.InstanceStateName;
 import com.amazonaws.services.ec2.model.TerminateInstancesRequest;
-import com.amazonaws.services.s3.transfer.TransferManager;
 
 /**
  * terminates the cluster instances, delete the key and security grp
@@ -90,22 +88,5 @@ public class ClusterTerminator {
 			System.exit(-1);
 		}
 		return instanceIds;
-	}
-
-	// download the output
-	public boolean downloadOutput(String outputPath) {
-		try {
-			TransferManager tx = new TransferManager(crediantials);
-			String simplifiedPath = (outputPath.replace("s3://", ""));
-			String bucketName = simplifiedPath.substring(0, simplifiedPath.indexOf("/"));
-			String key = simplifiedPath.substring(simplifiedPath.indexOf("/") + 1);
-			tx.downloadDirectory(bucketName, key, new File(System.getProperty("user.dir")));
-			return true;
-		}
-		catch(Exception ex) {
-			System.err.println("Failed to download output. Reason " + ex.getMessage());
-			return false;
-		}
-
 	}
 }

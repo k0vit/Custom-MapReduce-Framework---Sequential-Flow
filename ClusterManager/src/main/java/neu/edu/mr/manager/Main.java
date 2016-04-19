@@ -24,10 +24,8 @@ public class Main {
 	public static Logger logger; 
 
 	/**
-	 * 0 -action 
-	 * 1 - number of nodes or sort column name or s3 output path based on action
-	 * 2 - s3 input location
-	 * 3 - s3 output location
+	 * 0 - action 
+	 * 
 	 * @param args
 	 */
 	public static void main(String[] args) {
@@ -45,8 +43,6 @@ public class Main {
 			ClusterTerminator terminator = new ClusterTerminator(params);
 			boolean clusterTerminated = terminator.terminateCluster();
 			LOGGER.log(Level.FINE, "Cluster terminated successfully: " + clusterTerminated);
-			boolean downloadOutput = terminator.downloadOutput(args[1]);
-			LOGGER.log(Level.FINE, "downloaded output successfully: " + downloadOutput);
 		}
 		else {
 			System.err.println("Incorrect action " + args[0] + ". Action can either be [create] or [terminate]");
