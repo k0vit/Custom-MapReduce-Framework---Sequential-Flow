@@ -35,6 +35,7 @@ public class BaseContext<KEYIN,VALUEIN,KEYOUT,VALUEOUT> implements IContext<KEYI
 	}
 	
 	public Configuration getConfiguration() {
+		// TODO
 		// basically reading the conf file from s3 and creating properties out of it
 		return null;
 	}

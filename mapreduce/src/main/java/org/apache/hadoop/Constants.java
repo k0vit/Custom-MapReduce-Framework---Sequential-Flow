@@ -25,9 +25,11 @@ public class Constants {
 		public static final String S3_PATH_SEP = "/";
 		public static final String GZ_FILE_EXT = ".gz";
 		public static final String S3_URL = "s3://";
-		public static final String FILE_SPLITTER = ",";
+		public static final String TASK_SPLITTER = ",";
 		public static final String OP_OF_MAP = "OutputOfMap";
 		public static final String IP_OF_MAP = "InputOfMap";
+		public static final String IP_OF_REDUCE = "InputOfReducer";
+		public static final String OP_OF_REDUCE = "OutputOfReducer";
 	}
 
 	public static class ClusterProperties {
@@ -44,5 +46,10 @@ public class Constants {
 		public static final String DEFAULT_PORT = "4567";
 		public static final String DEFAULT_DATA = "";
 		public static final String KEY_URL = "/Key";
+	}
+	
+	public static class MapReduce {
+		public static final String MAP_METHD_NAME = "map";
+		public static final String REDUCE_METHD_NAME = "reduce";
 	}
 }

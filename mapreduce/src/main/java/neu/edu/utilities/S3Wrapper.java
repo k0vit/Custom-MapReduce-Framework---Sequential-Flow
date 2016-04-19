@@ -25,6 +25,7 @@ import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.amazonaws.services.s3.model.S3Object;
 import com.amazonaws.services.s3.model.S3ObjectSummary;
 import com.amazonaws.services.s3.transfer.Download;
+import com.amazonaws.services.s3.transfer.MultipleFileDownload;
 import com.amazonaws.services.s3.transfer.TransferManager;
 import com.amazonaws.services.s3.transfer.Upload;
 import com.opencsv.CSVWriter;
@@ -267,5 +268,14 @@ public class S3Wrapper {
 		}
 		log.info("Full file uploaded to S3 at the path: " + s3FullPath);
 		return true;
+	}
+	
+	public void downloadDir(String s3Path, String localDir) throws IOException, InterruptedException {
+		TransferManager tx = new TransferManager(s3client); 
+		String simplifiedPath = (s3Path.replace(S3_URL, ""));
+		String bucketName = simplifiedPath.substring(0, simplifiedPath.indexOf(S3_PATH_SEP));
+		String key = simplifiedPath.substring(simplifiedPath.indexOf(S3_PATH_SEP) + 1);
+		MultipleFileDownload d = tx.downloadDirectory(bucketName, key, new File(localDir));
+		d.waitForCompletion();
 	}
 }

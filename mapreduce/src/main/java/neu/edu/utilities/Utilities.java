@@ -47,7 +47,7 @@ public class Utilities {
 	public static Properties readClusterProperties() {
 		return readPropertyFile(CLUSTER_PROP_FILE_NAME);
 	}
-	
+
 	public static Properties readPropertyFile(String localFilePath) {
 		Properties prop = new Properties();
 		InputStream input = null;
@@ -85,13 +85,34 @@ public class Utilities {
 		} catch (UnknownHostException e) {
 			// TODO 
 		}
-		
+
 		for (Node node: nodes) {
 			if (node.getPrivateIp().equals(ip)) {
 				return node.getId();
 			}
 		}
-		
+
 		return String.valueOf(new Random().nextInt(100));
 	}
+
+	// TODO test it
+	public static void deleteFolder(File folder) {
+		File[] files = folder.listFiles();
+		if(files!=null) {
+			for(File f: files) {
+				if(f.isDirectory()) {
+					deleteFolder(f);
+				} else {
+					f.delete();
+				}
+			}
+		}
+		folder.delete();
+	}
+
+	public static void createDirs(String inputDir, String outputDir) {
+		new File(inputDir).mkdirs();
+		new File(outputDir).mkdirs();
+	}
 }
+

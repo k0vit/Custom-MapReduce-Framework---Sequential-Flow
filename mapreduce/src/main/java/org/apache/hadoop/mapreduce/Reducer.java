@@ -10,6 +10,13 @@ public class Reducer<KEYIN,VALUEIN,KEYOUT,VALUEOUT> {
 		public void write(KEYOUT key, VALUEOUT value) {
 			System.out.println(key + " " + value);
 		}
+		
+		public void close() {
+			// TODO close filewriter
+			// TODO upload files to s3
+		}
+		
+		private void uploadToS3() {}
 	}
 
 	public void setup(Context context) throws IOException, InterruptedException {};

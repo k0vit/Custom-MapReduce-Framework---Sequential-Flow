@@ -4,7 +4,7 @@ public class LongWritable {
 
 	private long value;
 	
-	public LongWritable(long value) {
+	public LongWritable(Long value) {
 		this.value = value;
 	}
 	

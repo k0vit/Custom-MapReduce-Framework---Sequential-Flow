@@ -6,12 +6,19 @@ import static org.apache.hadoop.Constants.CommProperties.EOR_URL;
 import static org.apache.hadoop.Constants.CommProperties.FILE_URL;
 import static org.apache.hadoop.Constants.CommProperties.KEY_URL;
 import static org.apache.hadoop.Constants.CommProperties.START_JOB_URL;
-import static org.apache.hadoop.Constants.FileConfig.FILE_SPLITTER;
 import static org.apache.hadoop.Constants.FileConfig.IP_OF_MAP;
+import static org.apache.hadoop.Constants.FileConfig.IP_OF_REDUCE;
 import static org.apache.hadoop.Constants.FileConfig.JOB_CONF_PROP_FILE_NAME;
+import static org.apache.hadoop.Constants.FileConfig.KEY_DIR_SUFFIX;
 import static org.apache.hadoop.Constants.FileConfig.OP_OF_MAP;
+import static org.apache.hadoop.Constants.FileConfig.OP_OF_REDUCE;
 import static org.apache.hadoop.Constants.FileConfig.S3_PATH_SEP;
+import static org.apache.hadoop.Constants.FileConfig.TASK_SPLITTER;
 import static org.apache.hadoop.Constants.JobConf.INPUT_PATH;
+import static org.apache.hadoop.Constants.JobConf.MAPPER_CLASS;
+import static org.apache.hadoop.Constants.JobConf.REDUCER_CLASS;
+import static org.apache.hadoop.Constants.MapReduce.MAP_METHD_NAME;
+import static org.apache.hadoop.Constants.MapReduce.REDUCE_METHD_NAME;
 import static spark.Spark.post;
 import static spark.Spark.stop;
 
@@ -19,23 +26,15 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
+import java.lang.reflect.Method;
 import java.util.Properties;
 import java.util.logging.Logger;
 
-import org.apache.commons.io.FileUtils;
+import org.apache.hadoop.io.LongWritable;
+import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.Mapper.Context;
-import org.jets3t.service.S3Service;
-import org.jets3t.service.ServiceException;
-import org.jets3t.service.impl.rest.httpclient.RestS3Service;
-import org.jets3t.service.model.S3Bucket;
-import org.jets3t.service.model.S3Object;
-import org.jets3t.service.multi.DownloadPackage;
-import org.jets3t.service.multi.SimpleThreadedStorageService;
-import org.jets3t.service.security.AWSCredentials;
+import org.apache.hadoop.mapreduce.Reducer;
 
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.services.s3.AmazonS3Client;
@@ -75,7 +74,7 @@ import neu.edu.utilities.Utilities;
  * call /EOM as mapper is done.
  * 
  * 6) 
- * listen to /Key for the set of keys from the reducer
+ * listen to /Key for the set of keys from the master
  * 
  * 7)
  * Create a folder Output
@@ -197,25 +196,17 @@ class SlaveJob implements Runnable {
 	 * ---- call the map method 
 	 * -- once the file is done: 
 	 * ---- call the close on Context to close all the FileWriter (check Context.write on Mapper below)
-	 * ---- upload the contents on s3
+	 * ---- upload the contents on s3 (Mapper Context does that as it has the file name)0
 	 * ---- delete the file
 	 */
 	private void processFiles() {
-		mapSetup();
-		String files[] = filesToProcess.split(FILE_SPLITTER);
+		Utilities.createDirs(IP_OF_MAP, OP_OF_MAP);
+		String files[] = filesToProcess.split(TASK_SPLITTER);
 		for (String file: files) {
 			String localFilePath = downloadFile(file);
 			processFile(localFilePath);
 			new File(localFilePath).delete();
 		}
-	}
-
-	private void mapSetup() {
-		File inputDir = new File(IP_OF_MAP);
-		inputDir.mkdir();
-
-		File outputDir = new File(OP_OF_MAP);
-		outputDir.mkdir();
 	}
 
 	private String downloadFile(String file) {
@@ -232,8 +223,9 @@ class SlaveJob implements Runnable {
 
 		try (BufferedReader br = new BufferedReader(new FileReader(file))){
 			String line = null;
+			long counter = 0l;
 			while((line = br.readLine()) != null) {
-				processLine(line, mapper, context);
+				processLine(line, mapper, context, counter);
 			}   
 		}
 		catch(Exception e) {
@@ -243,22 +235,51 @@ class SlaveJob implements Runnable {
 		context.close();
 	}
 
-	// TODO
 	private Mapper<?, ?, ?, ?> instantiateMapper() {
-		return null;
+
+		Class<?> mapperClass = getMapperClass();
+
+		Mapper<?,?,?,?> mapper = null;
+		try {
+			mapper = (Mapper<?, ?, ?, ?>) mapperClass.newInstance();
+		} catch (InstantiationException | IllegalAccessException e) {
+			// TODO
+		}
+
+		return mapper;
 	}
 
-	private void processLine(String line, Mapper<?, ?, ?, ?> mapper, Context context) {
-		// TODO
+	private Class<?> getMapperClass() {
+		Class<?> mapperClass = null;
+		try {
+			mapperClass = Class.forName(jobConfiguration.getProperty(MAPPER_CLASS));
+		} catch (ClassNotFoundException e) {
+			// TODO
+		}
+		return mapperClass;
+	}
+
+	@SuppressWarnings("rawtypes")
+	private void processLine(String line, Mapper<?, ?, ?, ?> mapper, Context context, long counter) {
+		try {
+			Class<?> KEYIN = Class.forName(LongWritable.class.getName());
+			Object keyIn = KEYIN.getConstructor(Long.class).newInstance(counter);
+			Class<?> VALUEIN = Class.forName(Text.class.getName());
+			Object valueIn = VALUEIN.getConstructor(String.class).newInstance(line);
+			java.lang.reflect.Method mthd = getMapperClass().getMethod(MAP_METHD_NAME, KEYIN, VALUEIN, Mapper.Context.class);
+			mthd.invoke(mapper, keyIn, valueIn, mapper.new Context());
+		} catch (Exception e) {
+			// TODO print e.printstacktrace
+		}
 	}
 
 	private void reduce() {
-		readKey();
-		processKey();
+		readKeys();
+		processKeys();
 		NodeCommWrapper.sendData(masterIp, EOR_URL);
 	}
 
-	private void readKey() {
+	private void readKeys() {
 		post(KEY_URL, (request, response) -> {
 			masterIp = request.ip();
 			keysToProcess = request.body();
@@ -269,67 +290,92 @@ class SlaveJob implements Runnable {
 
 		while (keysToProcess == null) {}
 
-		// TODO test 
 		stop();
 	}
 
-	private static void ReceiveKeysFromMaster() {
-		post("keys", (request, response) -> {
-			log.info("Received keys from Master..Keys: " + request.body());
-			String keys = request.body();
-			String[] keySplit = keys.split(",");
-
-			for (String key : keySplit) {
-				downloadBucketIntoLocal(key);
-				List<String> allKeyData = new ArrayList<String>();
-				File[] files = listDirectory(key);
-				for (File file : files) {
-					List<String> fileData = FileUtils.readLines(file, "UTF-8");
-					allKeyData.addAll(fileData);
-				}
-				Iterator<String> fullDataIterable = allKeyData.iterator();
-				// Pass it to reducer.
-			}
-
-			response.status(200);
-			response.body("SUCCESS");
-			return response.body().toString();
-		});
-
-		log.info("All files done..Sending end of reducer to Master");
-		NodeCommWrapper.sendData(MASTER_IP, port, endOfReducer, "DONE");
-	}
-
-	private static void downloadBucketIntoLocal(String key) {
-		AWSCredentials awsCred = new AWSCredentials(ACCESS_KEY, SECRET_KEY);
-		S3Service s3Service = new RestS3Service(awsCred);
-		S3Bucket s3Bucket;
-		try {
-			s3Bucket = s3Service.getBucket(key);
-			S3Object[] bucketFiles = s3Service.listObjects(s3Bucket.getName());
-			SimpleThreadedStorageService simpleMulti = new SimpleThreadedStorageService(s3Service);
-			DownloadPackage[] downloadPackages = new DownloadPackage[bucketFiles.length];
-			for (int i = 0; i < downloadPackages.length; i++) {
-				downloadPackages[i] = new DownloadPackage(bucketFiles[i], new File(bucketFiles[i].getKey()));
-			}
-			simpleMulti.downloadObjects(key, downloadPackages);
-		} catch (ServiceException e) {
-			log.severe("Service exception connected to S3: Exception: " + e.getMessage());
-		}
-
-	}
-
 	/**
-	 * List a given folder.
+	 * Create a folder Output
+	 * For each key 
+	 * -- Open file writer to file part-r-00<slaveId>-<file counter>
+	 * -- download the key directory from the s3
+	 * -- read all the files 
+	 * -- generate the iterator
+	 * -- Instantiate the reducer class
+	 * -- call the reduce method with the iterable
+	 * -- Close the context
+	 * -- once done delete the key dir
 	 * 
-	 * @param directoryPath
-	 * @return
-	 */
-	public static File[] listDirectory(String directoryPath) {
-		log.info("Listing folder: " + directoryPath);
-		File directory = new File(directoryPath);
-		File[] files = directory.listFiles();
-		return files;
+	 * */
+	private void processKeys() {
+		Utilities.createDirs(IP_OF_REDUCE, OP_OF_REDUCE);
+		String[] keys = keysToProcess.split(TASK_SPLITTER);
+		for (String key: keys) {
+			String keyDirPath = downloadKey(key);
+			processKey(keyDirPath, key);
+			Utilities.deleteFolder(new File(keyDirPath));
+		}
+	}
+
+	private String downloadKey(String key) {
+		String keyDir = (key + KEY_DIR_SUFFIX);
+		String keyDirLocalPath = IP_OF_REDUCE + File.separator + keyDir;
+		String s3KeyDir = BUCKET + S3_PATH_SEP + keyDir;
+		s3wrapper.downloadAndStoreFileInLocal(s3KeyDir, System.getProperty("user.dir"));
+		return keyDirLocalPath;
+	}
+
+	private void processKey(String keyDirPath, String key) {
+		Reducer<?,?,?,?> reducer = getReducerInstance();
+		Reducer<?, ?, ?, ?>.Context context = reducer.new Context();
+		Class<?> KEYIN = getReducerKeyInClass();
+		try {
+			Method mthdr = getReducerClass().getMethod(REDUCE_METHD_NAME, KEYIN, Iterable.class, Reducer.Context.class);
+			mthdr.invoke(reducer, getKey(key), getIterableValue(keyDirPath), context);
+		}
+		catch (Exception e) {
+			// TODO e.printstacktrace
+		}
+		context.close();
+	}
+
+	private Reducer<?, ?, ?, ?> getReducerInstance() {
+		Reducer<?, ?, ?, ?> reducer = null;
+		try {
+			reducer = (Reducer<?, ?, ?, ?>) getReducerClass().newInstance();
+		} catch (InstantiationException | IllegalAccessException e) {
+			// TODO
+		}
+		return reducer;
+	}
+
+	private Class<?> getReducerClass() {
+		Class<?> reducerClass = null;
+		try {
+			reducerClass = Class.forName(jobConfiguration.getProperty(REDUCER_CLASS));
+		} catch (ClassNotFoundException e) {
+			// TODO
+		}
+		return reducerClass;
+	}
+
+	private Class<?> getReducerKeyInClass() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	private Object getKey() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	private Object getIterableValue(String keyDirPath) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	private Object getKey(String key) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 	private void tearDown() {
