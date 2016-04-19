@@ -2,6 +2,21 @@
 
 chmod 400 ec2key.pem
 
+sleep 30
+
+while IFS="=" read key value
+do
+	key="${key// }"
+        value="${value// }"
+
+        if [ "$key" == "Jar" ]
+        then
+                jar=$value
+ 	fi
+done < user.properties
+
+echo $jar
+
 # II - instance identifier
 # PRIP - private ip
 # PUIP - public ip
@@ -9,10 +24,7 @@ chmod 400 ec2key.pem
 
 while IFS="," read II PRIP PUIP NT
 do
-        if [ "$NT" == "C" ]
-        then
-                scp -i ec2key.pem -o "UserKnownHostsFile=/dev/null" -o "StrictHostKeyChecking=no" client-0.0.1-SNAPSHOT-jar-with-dependencies.jar ec2-user@$PUIP:~/
-        else
-                scp -i ec2key.pem -o "UserKnownHostsFile=/dev/null" -o "StrictHostKeyChecking=no" SortNode-0.0.1-SNAPSHOT-jar-with-dependencies.jar ec2-user@$PUIP:~/
-        fi
+	scp -i ec2key.pem -o "UserKnownHostsFile=/dev/null" -o "StrictHostKeyChecking=no" mapreduce-0.0.1-SNAPSHOT-jar-with-dependencies.jar ec2-user@$PUIP:~/
+
+	scp -i ec2key.pem -o "UserKnownHostsFile=/dev/null" -o "StrictHostKeyChecking=no" $jar ec2-user@$PUIP:~/
 done < InstanceDetails.csv
