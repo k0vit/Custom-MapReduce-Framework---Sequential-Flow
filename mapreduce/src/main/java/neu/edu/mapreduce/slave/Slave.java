@@ -1,6 +1,8 @@
 package neu.edu.mapreduce.slave;
 
+import static org.apache.hadoop.Constants.ClusterProperties.ACCESS_KEY;
 import static org.apache.hadoop.Constants.ClusterProperties.BUCKET;
+import static org.apache.hadoop.Constants.ClusterProperties.SECRET_KEY;
 import static org.apache.hadoop.Constants.CommProperties.EOM_URL;
 import static org.apache.hadoop.Constants.CommProperties.EOR_URL;
 import static org.apache.hadoop.Constants.CommProperties.FILE_URL;
@@ -155,7 +157,7 @@ class SlaveJob implements Runnable {
 	 */
 	private void setup() {
 		s3wrapper = new S3Wrapper(new AmazonS3Client(new BasicAWSCredentials
-				(clusterProperties.getProperty("AccessKey"), clusterProperties.getProperty("SecretKey"))));
+				(clusterProperties.getProperty(ACCESS_KEY), clusterProperties.getProperty(SECRET_KEY))));
 
 		clusterProperties = Utilities.readClusterProperties();
 		slaveId = Utilities.getSlaveId(Utilities.readInstanceDetails());

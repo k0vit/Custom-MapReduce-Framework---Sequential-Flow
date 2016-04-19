@@ -1,18 +1,24 @@
 package org.apache.hadoop.mapreduce;
 
+import static org.apache.hadoop.Constants.FileConfig.JOB_CONF_PROP_FILE_NAME;
+
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Properties;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.IntWritable;
 
+import neu.edu.utilities.Utilities;
+
 public class BaseContext<KEYIN,VALUEIN,KEYOUT,VALUEOUT> implements IContext<KEYIN,VALUEIN,KEYOUT,VALUEOUT> {
 	
 	private Map<String, Map<String, IntWritable>> counter = new HashMap<>();
-
+	private Configuration config;
+	
 	@Override
 	public void write(KEYOUT key, VALUEOUT value) {
-		// TODO
+		System.out.println(key + " " + value);
 	}
 	
 	public IntWritable getCounter(String group, String counterName) {
@@ -35,8 +41,12 @@ public class BaseContext<KEYIN,VALUEIN,KEYOUT,VALUEOUT> implements IContext<KEYI
 	}
 	
 	public Configuration getConfiguration() {
-		// TODO
-		// basically reading the conf file from s3 and creating properties out of it
-		return null;
+		if (config == null) {
+			Properties jobConfig = Utilities.readPropertyFile(JOB_CONF_PROP_FILE_NAME);	
+			for (final String name: jobConfig.stringPropertyNames())
+			    config.set(name, jobConfig.getProperty(name));
+		}
+		
+		return this.config;
 	}
 }
