@@ -31,6 +31,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.util.LinkedList;
 import java.util.List;
@@ -261,13 +262,15 @@ class SlaveJob implements Runnable {
 		log.info("Instanting Mapper");
 		Mapper<?,?,?,?> mapper = null;
 		try {
-			mapper = (Mapper<?, ?, ?, ?>) getMapreduceClass(jobConfiguration.getProperty(MAPPER_CLASS)).newInstance();
+			Class<?> cls = getMapreduceClass(jobConfiguration.getProperty(MAPPER_CLASS));
+			Constructor<?> ctor = cls.getDeclaredConstructor();
+			ctor.setAccessible(true);
+			mapper = (Mapper<?, ?, ?, ?>) ctor.newInstance();
 			if (mapper != null) {
 				log.info("Mapper instantiated successfully " + jobConfiguration.getProperty(MAPPER_CLASS));
 			}
-		} catch (InstantiationException | IllegalAccessException e) {
-			log.severe("Failed to create an instance of mapper class " + mapper 
-					+ ". Reason " + e.getMessage());
+		} catch (Exception e) {
+			log.severe("Failed to create an instance of mapper class. Reason " + e.getMessage());
 			log.severe("Stacktrace " + Utilities.printStackTrace(e));
 		}
 		return mapper;
@@ -282,6 +285,7 @@ class SlaveJob implements Runnable {
 			Object valueIn = VALUEIN.getConstructor(String.class).newInstance(line);
 			java.lang.reflect.Method mthd = getMapreduceClass(jobConfiguration.getProperty(MAPPER_CLASS))
 					.getMethod(MAP_METHD_NAME, KEYIN, VALUEIN, Mapper.Context.class);
+			mthd.setAccessible(true);
 			mthd.invoke(mapper, keyIn, valueIn, mapper.new Context());
 		} catch (Exception e) {
 			log.severe("Failed to invoke map method on mapper class " + mapper 
@@ -357,6 +361,7 @@ class SlaveJob implements Runnable {
 					.getMethod(REDUCE_METHD_NAME, KEYIN, Iterable.class, Reducer.Context.class);
 			Object keyInst = KEYIN.getConstructor(String.class).newInstance(key);
 			log.info("Invoking reduce method");
+			mthdr.setAccessible(true);
 			mthdr.invoke(reducer, keyInst, getIterableValue(keyDirPath, key), context);
 		}
 		catch (Exception e) {
@@ -369,11 +374,14 @@ class SlaveJob implements Runnable {
 	private Reducer<?, ?, ?, ?> getReducerInstance() {
 		Reducer<?, ?, ?, ?> reducer = null;
 		try {
-			reducer = (Reducer<?, ?, ?, ?>) getMapreduceClass(jobConfiguration.getProperty(REDUCER_CLASS)).newInstance();
+			Class<?> cls = getMapreduceClass(jobConfiguration.getProperty(REDUCER_CLASS));
+			Constructor<?> ctor = cls.getDeclaredConstructor();
+			ctor.setAccessible(true);
+			reducer = (Reducer<?, ?, ?, ?>) ctor.newInstance();
 			if (reducer != null) {
 				log.info("Reducer class instantiated successfully " + jobConfiguration.getProperty(REDUCER_CLASS));
 			}
-		} catch (InstantiationException | IllegalAccessException e) {
+		} catch (Exception e) {
 			log.severe("Failed to create an instance of reducer class " + reducer 
 					+ ". Reason " + e.getMessage());
 			log.severe("Stacktrace " + Utilities.printStackTrace(e));
