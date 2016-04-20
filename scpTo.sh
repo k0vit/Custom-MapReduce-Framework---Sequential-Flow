@@ -2,8 +2,6 @@
 
 chmod 400 ec2key.pem
 
-sleep 30
-
 while IFS="=" read key value
 do
 	key="${key// }"
