@@ -11,6 +11,7 @@ run:
 	#cp mapreduce/target/mapreduce-0.0.1-SNAPSHOT-jar-with-dependencies.jar .	
 	java -jar cluster_manager-0.0.1-SNAPSHOT-jar-with-dependencies.jar create > cluster_manager_create.txt 2>&1
 	chmod 777 scpTo.sh
+	sleep 30
 	./scpTo.sh
 	chmod 777 sshToRun.sh
 	./sshToRun.sh
