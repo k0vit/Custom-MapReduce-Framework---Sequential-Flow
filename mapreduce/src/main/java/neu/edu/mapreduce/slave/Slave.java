@@ -148,12 +148,36 @@ class SlaveJob implements Runnable {
 
 	@Override
 	public void run() {
-		setup();
 		map();
 		reduce();
 		tearDown();
 	}
 
+	private void map() { 
+		log.info("Starting map task");
+		readFiles();
+		setup();
+		processFiles();
+		log.info("All files processed, signalling end of mapper phase");
+		NodeCommWrapper.sendData(masterIp, EOM_URL);
+	}
+
+	private void readFiles() {
+		log.info("Listening on " + FILE_URL + " for files from master");
+		post(FILE_URL, (request, response) -> {
+			masterIp = request.ip();
+			filesToProcess = request.body();
+			response.status(OK);
+			response.body(SUCCESS);
+			return response.body().toString();
+		});		
+
+		while (filesToProcess == null) {}
+
+		log.info("Files to process by mapper " + filesToProcess);
+		//stop();
+	}
+	
 	/**
 	 * step 2
 	 */
@@ -173,28 +197,6 @@ class SlaveJob implements Runnable {
 		return Utilities.readPropertyFile(localFilePath);
 	}
 
-	private void map() { 
-		log.info("Starting map task");
-		readFiles();
-		processFiles();
-		log.info("All files processed, signalling end of mapper phase");
-		NodeCommWrapper.sendData(masterIp, EOM_URL);
-	}
-
-	private void readFiles() {
-		post(FILE_URL, (request, response) -> {
-			masterIp = request.ip();
-			filesToProcess = request.body();
-			response.status(OK);
-			response.body(SUCCESS);
-			return response.body().toString();
-		});		
-
-		while (filesToProcess == null) {}
-
-		log.info("Files to process by mapper " + filesToProcess);
-		//stop();
-	}
 
 	/**
 	 * Step 4
