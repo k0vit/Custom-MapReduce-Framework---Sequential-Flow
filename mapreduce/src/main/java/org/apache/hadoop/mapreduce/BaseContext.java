@@ -45,6 +45,7 @@ public class BaseContext<KEYIN,VALUEIN,KEYOUT,VALUEOUT> implements IContext<KEYI
 	
 	public Configuration getConfiguration() {
 		if (config == null) {
+			config = new Configuration();
 			Properties jobConfig = Utilities.readPropertyFile(JOB_CONF_PROP_FILE_NAME);	
 			for (final String name: jobConfig.stringPropertyNames())
 			    config.set(name, jobConfig.getProperty(name));
