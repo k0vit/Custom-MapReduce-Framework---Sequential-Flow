@@ -6,6 +6,7 @@ import static org.apache.hadoop.Constants.ClusterProperties.SECRET_KEY;
 import static org.apache.hadoop.Constants.FileConfig.IP_OF_REDUCE;
 import static org.apache.hadoop.Constants.FileConfig.KEY_DIR_SUFFIX;
 import static org.apache.hadoop.Constants.FileConfig.OP_OF_MAP;
+import static org.apache.hadoop.Constants.FileConfig.S3_PATH_SEP;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -62,7 +63,7 @@ public class Mapper<KEYIN, VALUEIN, KEYOUT, VALUEOUT> {
 			log.info("context write invoked with key " + key.toString() + " and value as " + value.toString());
 			if (!keyToFile.containsKey(key)) {
 				String filePath = System.getProperty("user.dir") + File.separator + OP_OF_MAP + File.separator
-						+ key + KEY_DIR_SUFFIX + File.separator + key + "_" +
+						+ key + KEY_DIR_SUFFIX  + key + "_" +
 						(new SimpleDateFormat("yyyyMMddhhmm'.txt'").format(new Date())) + slaveId;
 
 				try {
@@ -108,6 +109,7 @@ public class Mapper<KEYIN, VALUEIN, KEYOUT, VALUEOUT> {
 				log.info("uploading mapper output file with respect to key " + key);
 				String keyDir = (key + KEY_DIR_SUFFIX);
 				String prefix = IP_OF_REDUCE + File.separator + keyDir;
+				prefix.substring(0, prefix.lastIndexOf(S3_PATH_SEP));
 				String bucket = getConfiguration().get(BUCKET);
 				String keyLocalDir = OP_OF_MAP + keyDir;
 				File dir = new File(keyLocalDir);
