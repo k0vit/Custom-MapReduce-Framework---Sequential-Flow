@@ -271,7 +271,7 @@ class NodeToTask implements Comparable<NodeToTask>{
 
 	public void addToTaskLst(String taskName, boolean isFile) {
 		if (isFile) {
-			taskLst.append(taskName.substring(taskName.lastIndexOf(S3_PATH_SEP))).append(TASK_SPLITTER);
+			taskLst.append(taskName.substring(taskName.lastIndexOf(S3_PATH_SEP) + 1)).append(TASK_SPLITTER);
 		}
 		else {
 			taskLst.append(taskName).append(TASK_SPLITTER);
