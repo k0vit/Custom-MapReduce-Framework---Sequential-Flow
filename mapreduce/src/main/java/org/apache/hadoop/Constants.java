@@ -56,5 +56,6 @@ public class Constants {
 	public static class MapReduce {
 		public static final String MAP_METHD_NAME = "map";
 		public static final String REDUCE_METHD_NAME = "reduce";
+		public static final String NOKEY = "NOKEY";
 	}
 }

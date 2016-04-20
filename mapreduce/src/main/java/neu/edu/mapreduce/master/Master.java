@@ -17,6 +17,7 @@ import static org.apache.hadoop.Constants.FileConfig.TASK_SPLITTER;
 import static org.apache.hadoop.Constants.JobConf.INPUT_PATH;
 import static org.apache.hadoop.Constants.JobConf.JOB_NAME;
 import static org.apache.hadoop.Constants.JobConf.OUTPUT_PATH;
+import static org.apache.hadoop.Constants.MapReduce.NOKEY;
 import static spark.Spark.post;
 
 import java.io.PrintWriter;
@@ -267,8 +268,11 @@ class NodeToTask implements Comparable<NodeToTask>{
 	public String getTaskLst() {
 		if (taskLst.length() != 0) {
 			taskLst.deleteCharAt(taskLst.length() - 1);
+			return taskLst.toString();
 		}
-		return taskLst.toString();
+		else {
+			return NOKEY;
+		}
 	}
 
 	public void addToTaskLst(String taskName, boolean isFile) {

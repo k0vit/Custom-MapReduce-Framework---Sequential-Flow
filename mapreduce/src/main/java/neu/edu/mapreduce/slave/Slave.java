@@ -24,19 +24,23 @@ import static org.apache.hadoop.Constants.JobConf.MAP_OUTPUT_KEY_CLASS;
 import static org.apache.hadoop.Constants.JobConf.MAP_OUTPUT_VALUE_CLASS;
 import static org.apache.hadoop.Constants.JobConf.REDUCER_CLASS;
 import static org.apache.hadoop.Constants.MapReduce.MAP_METHD_NAME;
+import static org.apache.hadoop.Constants.MapReduce.NOKEY;
 import static org.apache.hadoop.Constants.MapReduce.REDUCE_METHD_NAME;
 import static spark.Spark.post;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Properties;
 import java.util.logging.Logger;
+import java.util.zip.GZIPInputStream;
 
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
@@ -186,12 +190,12 @@ class SlaveJob implements Runnable {
 		log.info("Files to process by mapper " + filesToProcess);
 		//stop();
 	}
-	
+
 	/**
 	 * step 2
 	 */
 	private void setup() {
-		
+
 		clusterProperties = Utilities.readClusterProperties();
 		s3wrapper = new S3Wrapper(new AmazonS3Client(new BasicAWSCredentials
 				(clusterProperties.getProperty(ACCESS_KEY), clusterProperties.getProperty(SECRET_KEY))));
@@ -236,7 +240,7 @@ class SlaveJob implements Runnable {
 	}
 
 	private String downloadFile(String file) {
-		
+
 		String s3FilePath = jobConfiguration.getProperty(INPUT_PATH) + S3_PATH_SEP + file;
 		String localFilePath = IP_OF_MAP + File.separator + file;
 		return s3wrapper.readOutputFromS3(s3FilePath, localFilePath);
@@ -245,7 +249,8 @@ class SlaveJob implements Runnable {
 	@SuppressWarnings("rawtypes")
 	private void processFile(String file, Mapper<?, ?, ?, ?> mapper, Context context) {
 		log.info("Processing file " + file);
-		try (BufferedReader br = new BufferedReader(new FileReader(file))){
+		try (BufferedReader br = new BufferedReader(new InputStreamReader
+				(new GZIPInputStream(new FileInputStream(file))))){
 			String line = null;
 			long counter = 0l;
 			while((line = br.readLine()) != null) {
@@ -335,11 +340,13 @@ class SlaveJob implements Runnable {
 		Reducer<?,?,?,?> reducer = getReducerInstance();
 		Reducer<?, ?, ?, ?>.Context context = reducer.new Context();
 		for (String key: keys) {
-			log.info("Processing key " + key);
-			String keyDirPath = downloadKeyFiles(key);
-			processKey(keyDirPath, key, reducer, context);
-			context.close();
-			Utilities.deleteFolder(new File(keyDirPath));
+			if (!key.equals(NOKEY)) {
+				log.info("Processing key " + key);
+				String keyDirPath = downloadKeyFiles(key);
+				processKey(keyDirPath, key, reducer, context);
+				context.close();
+				Utilities.deleteFolder(new File(keyDirPath));
+			}
 		}
 	}
 
