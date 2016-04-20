@@ -158,10 +158,10 @@ class SlaveJob implements Runnable {
 	 * step 2
 	 */
 	private void setup() {
+		
+		clusterProperties = Utilities.readClusterProperties();
 		s3wrapper = new S3Wrapper(new AmazonS3Client(new BasicAWSCredentials
 				(clusterProperties.getProperty(ACCESS_KEY), clusterProperties.getProperty(SECRET_KEY))));
-
-		clusterProperties = Utilities.readClusterProperties();
 		jobConfiguration = downloadAndReadJobConfig();
 		log.info("Slave setup done");
 	}

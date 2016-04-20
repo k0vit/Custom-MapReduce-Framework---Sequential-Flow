@@ -149,7 +149,9 @@ public class Master {
 
 		List<NodeToTask> nodeToFile = new ArrayList<>(nodes.size()); 
 		for (Node node : nodes) {
-			nodeToFile.add(new NodeToTask(node));
+			if (node.isSlave()) {
+				nodeToFile.add(new NodeToTask(node));
+			}
 		}
 
 		for (S3File file : s3Files) {
@@ -159,7 +161,7 @@ public class Master {
 			}
 			Collections.sort(nodeToFile);
 		}
-		
+
 		log.info("File distribution");
 		log.info(nodeToFile.toString());
 
@@ -214,21 +216,23 @@ public class Master {
 				}
 			}
 		}
-		
+
 		List<NodeToTask> nodeToKey = new ArrayList<>(nodes.size()); 
 		for (Node node : nodes) {
-			nodeToKey.add(new NodeToTask(node));
+			if (node.isSlave()) {
+				nodeToKey.add(new NodeToTask(node));
+			}
 		}
 
 		Map<String, Long> sortedMap = Utilities.sortByValue(keyToSize);
 		log.info(sortedMap.toString());
-		
+
 		for (String k : sortedMap.keySet()) {
 			nodeToKey.get(0).addToTaskLst(k, false);
 			nodeToKey.get(0).addToTotalSize(sortedMap.get(k));
 			Collections.sort(nodeToKey);
 		}
-		
+
 		log.info("Key Distribution");
 		log.info(nodeToKey.toString());
 
