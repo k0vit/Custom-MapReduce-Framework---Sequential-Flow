@@ -67,7 +67,8 @@ public class Reducer<KEYIN,VALUEIN,KEYOUT,VALUEOUT> {
 		@Override
 		public void write(KEYOUT key, VALUEOUT value) {
 			try {
-				bw.write(key.toString() + getConfiguration().get(REDUCER_OP_SEPARATOR) + value.toString());
+				bw.write(key.toString() + getConfiguration().get(REDUCER_OP_SEPARATOR) + value.toString() + 
+						System.getProperty("line.separator"));
 			} catch (IOException e) {
 				log.severe("Failed to write record with key as " + key.toString() + " and value as " 
 						+ value.toString() + ". Reason: " + e.getMessage());
