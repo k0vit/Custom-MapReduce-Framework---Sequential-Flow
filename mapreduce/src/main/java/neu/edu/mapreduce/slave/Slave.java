@@ -239,6 +239,7 @@ class SlaveJob implements Runnable {
 			long counter = 0l;
 			while((line = br.readLine()) != null) {
 				processLine(line, mapper, context, counter);
+				counter++;
 			}   
 		}
 		catch(Exception e) {
