@@ -265,7 +265,9 @@ class NodeToTask implements Comparable<NodeToTask>{
 	}
 
 	public String getTaskLst() {
-		taskLst.deleteCharAt(taskLst.length() - 1);
+		if (taskLst.length() != 0) {
+			taskLst.deleteCharAt(taskLst.length() - 1);
+		}
 		return taskLst.toString();
 	}
 

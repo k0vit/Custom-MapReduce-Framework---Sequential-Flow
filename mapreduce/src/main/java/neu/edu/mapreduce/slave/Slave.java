@@ -279,6 +279,7 @@ class SlaveJob implements Runnable {
 	@SuppressWarnings("rawtypes")
 	private void processLine(String line, Mapper<?, ?, ?, ?> mapper, Context context, long counter) {
 		try {
+			log.info("Calling map with key as " + counter + " value as " + line);
 			Class<?> KEYIN = Class.forName(LongWritable.class.getName());
 			Object keyIn = KEYIN.getConstructor(Long.class).newInstance(counter);
 			Class<?> VALUEIN = Class.forName(Text.class.getName());
@@ -286,7 +287,7 @@ class SlaveJob implements Runnable {
 			java.lang.reflect.Method mthd = getMapreduceClass(jobConfiguration.getProperty(MAPPER_CLASS))
 					.getMethod(MAP_METHD_NAME, KEYIN, VALUEIN, Mapper.Context.class);
 			mthd.setAccessible(true);
-			mthd.invoke(mapper, keyIn, valueIn, mapper.new Context());
+			mthd.invoke(mapper, keyIn, valueIn, context);
 		} catch (Exception e) {
 			log.severe("Failed to invoke map method on mapper class " + mapper 
 					+ ". Reason " + e.getMessage());

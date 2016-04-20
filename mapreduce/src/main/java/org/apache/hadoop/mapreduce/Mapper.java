@@ -54,11 +54,12 @@ public class Mapper<KEYIN, VALUEIN, KEYOUT, VALUEOUT> {
 			s3wrapper = new S3Wrapper(new AmazonS3Client(new BasicAWSCredentials
 					(clusterProperties.getProperty(ACCESS_KEY), clusterProperties.getProperty(SECRET_KEY))));
 			slaveId = Utilities.getSlaveId(Utilities.readInstanceDetails());
-			log.info("Initializing mapper with Slave id " + slaveId);
+			log.info("Initializing slave mapper task with Slave id " + slaveId);
 		}
 
 		@Override
 		public void write(KEYOUT key, VALUEOUT value) {
+			log.info("context write invoked with key " + key.toString() + " and value as " + value.toString());
 			if (!keyToFile.containsKey(key)) {
 				String filePath = System.getProperty("user.dir") + File.separator + OP_OF_MAP + File.separator
 						+ key + KEY_DIR_SUFFIX + File.separator + key + "_" +
@@ -91,6 +92,7 @@ public class Mapper<KEYIN, VALUEIN, KEYOUT, VALUEOUT> {
 		}
 
 		private void closeAllFileWriter() {
+			log.info("Closing all the BufferedWriter " + keyToFile.size());
 			for(String key: keyToFile.keySet()) {
 				BufferedWriter bw = keyToFile.get(key);
 				try {
