@@ -110,7 +110,6 @@ public class Mapper<KEYIN, VALUEIN, KEYOUT, VALUEOUT> {
 				log.info("uploading mapper output file with respect to key " + key);
 				String keyDir = (key + KEY_DIR_SUFFIX);
 				String prefix = IP_OF_REDUCE + File.separator + keyDir;
-				prefix.substring(0, prefix.lastIndexOf(S3_PATH_SEP));
 				String bucket = clusterProperties.getProperty(BUCKET);
 				String keyLocalDir = OP_OF_MAP + File.separator + keyDir;
 				File dir = new File(keyLocalDir);
@@ -119,7 +118,7 @@ public class Mapper<KEYIN, VALUEIN, KEYOUT, VALUEOUT> {
 					if (files != null) {
 						for (File file: dir.listFiles()) {
 							if (file.getName().startsWith(key)) {
-								String s3FullPath = bucket + prefix + file.getName();
+								String s3FullPath = bucket + S3_PATH_SEP + prefix + file.getName();
 								s3wrapper.uploadFileS3(s3FullPath, file);
 							}
 						}
