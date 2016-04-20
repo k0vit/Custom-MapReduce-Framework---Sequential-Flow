@@ -365,8 +365,8 @@ class SlaveJob implements Runnable {
 		log.info("Download files for key " + key);
 		String keyDir = (key + KEY_DIR_SUFFIX);
 		String keyDirLocalPath = IP_OF_REDUCE + File.separator + keyDir;
-		String s3KeyDir = BUCKET + S3_PATH_SEP + keyDir;
-		s3KeyDir.substring(0, s3KeyDir.lastIndexOf(S3_PATH_SEP));
+		String s3KeyDir = clusterProperties.getProperty(BUCKET) + S3_PATH_SEP + keyDir;
+		s3KeyDir = s3KeyDir.substring(0, s3KeyDir.lastIndexOf(S3_PATH_SEP));
 		s3wrapper.downloadDir(s3KeyDir, System.getProperty("user.dir"));
 		log.info("key dir local path " + keyDirLocalPath);
 		return keyDirLocalPath;
