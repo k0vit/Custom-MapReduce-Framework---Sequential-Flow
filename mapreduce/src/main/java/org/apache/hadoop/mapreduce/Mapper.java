@@ -64,12 +64,13 @@ public class Mapper<KEYIN, VALUEIN, KEYOUT, VALUEOUT> {
 			if (!keyToFile.containsKey(key)) {
 				String filePath = System.getProperty("user.dir") + File.separator + OP_OF_MAP + File.separator
 						+ key + KEY_DIR_SUFFIX  + key + "_" +
-						(new SimpleDateFormat("yyyyMMddhhmm'.txt'").format(new Date())) + slaveId;
+						(new SimpleDateFormat("yyyyMMddhhmm").format(new Date())) + slaveId;
 
 				try {
 					log.info("Creating mapper output file " + filePath);
 					File f = new File(filePath);
 					if (!f.exists()) {
+						f.getParentFile().mkdirs();
 						f.createNewFile();
 					}
 					keyToFile.put(key.toString(), new BufferedWriter(new FileWriter(filePath)));
