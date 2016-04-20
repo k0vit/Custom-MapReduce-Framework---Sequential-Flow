@@ -9,14 +9,13 @@ import static org.apache.hadoop.Constants.CommProperties.OK;
 import static org.apache.hadoop.Constants.CommProperties.START_JOB_URL;
 import static org.apache.hadoop.Constants.CommProperties.SUCCESS;
 import static org.apache.hadoop.Constants.FileConfig.GZ_FILE_EXT;
+import static org.apache.hadoop.Constants.FileConfig.IP_OF_REDUCE;
 import static org.apache.hadoop.Constants.FileConfig.JOB_CONF_PROP_FILE_NAME;
 import static org.apache.hadoop.Constants.FileConfig.KEY_DIR_SUFFIX;
-import static org.apache.hadoop.Constants.FileConfig.MAPPER_OP_DIR;
 import static org.apache.hadoop.Constants.FileConfig.S3_PATH_SEP;
 import static org.apache.hadoop.Constants.FileConfig.TASK_SPLITTER;
 import static org.apache.hadoop.Constants.JobConf.INPUT_PATH;
 import static org.apache.hadoop.Constants.JobConf.JOB_NAME;
-import static org.apache.hadoop.Constants.JobConf.OUTPUT_PATH;
 import static org.apache.hadoop.Constants.MapReduce.NOKEY;
 import static spark.Spark.post;
 
@@ -200,8 +199,7 @@ public class Master {
 	 * Step 5
 	 */
 	private void sendKeysToReducer() {
-		List<S3File> s3Files = s3wrapper.getListOfObjects(job.getConfiguration().get(OUTPUT_PATH) + MAPPER_OP_DIR);
-
+		List<S3File> s3Files = s3wrapper.getListOfObjects(clusterProperties.get(BUCKET) + S3_PATH_SEP + IP_OF_REDUCE);
 		Map<String, Long> keyToSize = new HashMap<>();
 		String key = null;
 		for (S3File file : s3Files) {

@@ -309,14 +309,25 @@ class SlaveJob implements Runnable {
 	}
 
 	private void readKeys() {
+		log.info("Listening on " + KEY_URL);
 		post(KEY_URL, (request, response) -> {
 			masterIp = request.ip();
 			keysToProcess = request.body();
+			log.info("Recieved request from " + masterIp + " with data as " + keysToProcess);
 			response.status(200);
 			response.body("SUCCESS");
 			return response.body().toString();
-		});		
-		while (keysToProcess == null) {}
+		});	
+		
+		while (keysToProcess == null) {
+			log.info("Waiting for keys from master");
+			try {
+				Thread.sleep(10000);
+			} catch (InterruptedException e) {
+				log.severe("Sleep interrupted while waiting for keys from master");
+			}
+		}
+		
 		log.info("Keys to process " + keysToProcess);
 		//stop();
 	}
@@ -356,7 +367,7 @@ class SlaveJob implements Runnable {
 		String keyDirLocalPath = IP_OF_REDUCE + File.separator + keyDir;
 		String s3KeyDir = BUCKET + S3_PATH_SEP + keyDir;
 		s3KeyDir.substring(0, s3KeyDir.lastIndexOf(S3_PATH_SEP));
-		s3wrapper.downloadAndStoreFileInLocal(s3KeyDir, System.getProperty("user.dir"));
+		s3wrapper.downloadDir(s3KeyDir, System.getProperty("user.dir"));
 		log.info("key dir local path " + keyDirLocalPath);
 		return keyDirLocalPath;
 	}
