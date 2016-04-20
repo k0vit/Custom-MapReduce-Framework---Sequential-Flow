@@ -167,12 +167,20 @@ class SlaveJob implements Runnable {
 		post(FILE_URL, (request, response) -> {
 			masterIp = request.ip();
 			filesToProcess = request.body();
+			log.info("Recieved request on " + FILE_URL + " from " + masterIp);
 			response.status(OK);
 			response.body(SUCCESS);
 			return response.body().toString();
 		});		
 
-		while (filesToProcess == null) {}
+		while (filesToProcess == null) {
+			log.info("Waiting for files from master");
+			try {
+				Thread.sleep(10000);
+			} catch (InterruptedException e) {
+				log.severe("Sleep interrupted while waiting for files from master");
+			}
+		}
 
 		log.info("Files to process by mapper " + filesToProcess);
 		//stop();

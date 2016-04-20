@@ -185,6 +185,7 @@ public class Master {
 
 		while (noOfMapReduceDone.get() != slaveCount) {
 			try {
+				log.info("Waiting at " + url + " from all slaves");
 				Thread.sleep(30000);
 			} catch (InterruptedException e) {
 				log.severe("Sleep interrupted while waiting for End of mapper signal");
