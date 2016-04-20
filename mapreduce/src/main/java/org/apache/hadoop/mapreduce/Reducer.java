@@ -57,7 +57,7 @@ public class Reducer<KEYIN,VALUEIN,KEYOUT,VALUEOUT> {
 			fileFullPath = OP_OF_REDUCE + File.separator + PART_FILE_PREFIX + slaveId + counter;
 			try {
 				log.info("Creating file " + fileFullPath);
-				bw = new BufferedWriter(new FileWriter(fileFullPath));
+				bw = new BufferedWriter(new FileWriter(fileFullPath, true));
 			} catch (IOException e) {
 				log.severe("Failed to create BufferedWriter for file " + fileFullPath 
 						+ ". Reason: " + e.getMessage());

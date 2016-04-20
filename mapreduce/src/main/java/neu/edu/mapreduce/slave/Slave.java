@@ -440,7 +440,7 @@ class SlaveJob implements Runnable {
 
 	private List<Object> getIterableValue(String keyDirPath, String key) {
 		log.info("Creating iterator for key " + key + " by reading all the file records from " + keyDirPath);
-		File[] files  = new File(keyDirPath).listFiles();
+		File[] files  = new File(System.getProperty("user.dir") + File.separator + keyDirPath).listFiles();
 		log.info("There are " + files.length + " associated with key " + key);
 		List<Object> values = new LinkedList<>();
 		Class<?> VALUEIN = getReducerInputClass(jobConfiguration.getProperty(MAP_OUTPUT_VALUE_CLASS));
