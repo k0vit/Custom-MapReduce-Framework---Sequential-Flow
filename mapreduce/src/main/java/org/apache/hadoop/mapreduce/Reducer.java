@@ -1,11 +1,11 @@
 package org.apache.hadoop.mapreduce;
 
 import static org.apache.hadoop.Constants.ClusterProperties.ACCESS_KEY;
-import static org.apache.hadoop.Constants.ClusterProperties.BUCKET;
 import static org.apache.hadoop.Constants.ClusterProperties.SECRET_KEY;
 import static org.apache.hadoop.Constants.FileConfig.OP_OF_REDUCE;
 import static org.apache.hadoop.Constants.FileConfig.PART_FILE_PREFIX;
 import static org.apache.hadoop.Constants.FileConfig.S3_PATH_SEP;
+import static org.apache.hadoop.Constants.JobConf.OUTPUT_PATH;
 import static org.apache.hadoop.Constants.JobConf.REDUCER_OP_SEPARATOR;
 
 import java.io.BufferedWriter;
@@ -88,7 +88,7 @@ public class Reducer<KEYIN,VALUEIN,KEYOUT,VALUEOUT> {
 
 		private void uploadToS3() {
 			File fileToUpload = new File(fileFullPath);
-			String s3FullPath = clusterProperties.getProperty(BUCKET) + S3_PATH_SEP + fileToUpload.getName();
+			String s3FullPath = getConfiguration().get(OUTPUT_PATH) + S3_PATH_SEP + fileToUpload.getName();
 			log.info("Upload reducer output from " + fileFullPath + " to " + s3FullPath) ;
 			s3wrapper.uploadFileS3(s3FullPath, fileToUpload);
 		}
