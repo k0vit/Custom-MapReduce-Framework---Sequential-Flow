@@ -26,7 +26,6 @@ import static org.apache.hadoop.Constants.JobConf.REDUCER_CLASS;
 import static org.apache.hadoop.Constants.MapReduce.MAP_METHD_NAME;
 import static org.apache.hadoop.Constants.MapReduce.REDUCE_METHD_NAME;
 import static spark.Spark.post;
-import static spark.Spark.stop;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -130,6 +129,7 @@ public class Slave {
 			response.status(OK);
 			response.body(SUCCESS);
 			(new Thread(new SlaveJob())).start();
+			log.info("Started new thread to handle the job " + request.body());
 			return response.body().toString();
 		});
 	}
@@ -193,7 +193,7 @@ class SlaveJob implements Runnable {
 		while (filesToProcess == null) {}
 
 		log.info("Files to process by mapper " + filesToProcess);
-		stop();
+		//stop();
 	}
 
 	/**
@@ -298,7 +298,7 @@ class SlaveJob implements Runnable {
 		});		
 		while (keysToProcess == null) {}
 		log.info("Keys to process " + keysToProcess);
-		stop();
+		//stop();
 	}
 
 	/**
