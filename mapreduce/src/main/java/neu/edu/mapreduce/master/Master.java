@@ -91,9 +91,9 @@ public class Master {
 		setup();
 		startJob();
 		sendFilesToMapper();
-		listenToEndOfMapReduce(EOM_URL);
+		listenToEndOfMapReduce(EOM_URL, "Mapper");
 		sendKeysToReducer();
-		listenToEndOfMapReduce(EOR_URL);
+		listenToEndOfMapReduce(EOR_URL, "Reducer");
 
 		return true;
 	}
@@ -173,23 +173,18 @@ public class Master {
 	/**
 	 * Step 4 and 6
 	 */
-	private void listenToEndOfMapReduce(String url) {
+	private void listenToEndOfMapReduce(String url, String taskType) {
 		post(url, (request, response) -> {
 			response.status(OK);
 			response.body(SUCCESS);
 			noOfMapReduceDone.incrementAndGet();
-			log.info("Recieved end of  mapper signal from " + noOfMapReduceDone.get() + " mapper out of " + 
-					(nodes.size() - 1));
+			log.info("Recieved end of " + taskType + " signal from " + noOfMapReduceDone.get() +
+					" " +  taskType + " out of " + (nodes.size() - 1));
 			return response.body().toString();
 		});
 
 		while (noOfMapReduceDone.get() != slaveCount) {
-			try {
-				log.info("Waiting at " + url + " from all slaves");
-				Thread.sleep(30000);
-			} catch (InterruptedException e) {
-				log.severe("Sleep interrupted while waiting for End of mapper signal");
-			}
+			log.fine("Waiting at " + url + " from all slaves");
 		}
 
 		noOfMapReduceDone.set(0);
