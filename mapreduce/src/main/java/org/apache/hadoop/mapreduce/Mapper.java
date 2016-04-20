@@ -61,7 +61,7 @@ public class Mapper<KEYIN, VALUEIN, KEYOUT, VALUEOUT> {
 		@Override
 		public void write(KEYOUT key, VALUEOUT value) {
 			log.info("context write invoked with key " + key.toString() + " and value as " + value.toString());
-			if (!keyToFile.containsKey(key)) {
+			if (!keyToFile.containsKey(key.toString())) {
 				String filePath = System.getProperty("user.dir") + File.separator + OP_OF_MAP + File.separator
 						+ key + KEY_DIR_SUFFIX  + key + "_" +
 						(new SimpleDateFormat("yyyyMMddhhmm").format(new Date())) + slaveId;
@@ -73,7 +73,7 @@ public class Mapper<KEYIN, VALUEIN, KEYOUT, VALUEOUT> {
 						f.getParentFile().mkdirs();
 						f.createNewFile();
 					}
-					keyToFile.put(key.toString(), new BufferedWriter(new FileWriter(filePath)));
+					keyToFile.put(key.toString(), new BufferedWriter(new FileWriter(filePath, true)));
 				} catch (IOException e) {
 					log.severe("Failed to create file " + filePath + ". Reason " + e.getMessage());
 				}
@@ -111,8 +111,8 @@ public class Mapper<KEYIN, VALUEIN, KEYOUT, VALUEOUT> {
 				String keyDir = (key + KEY_DIR_SUFFIX);
 				String prefix = IP_OF_REDUCE + File.separator + keyDir;
 				prefix.substring(0, prefix.lastIndexOf(S3_PATH_SEP));
-				String bucket = getConfiguration().get(BUCKET);
-				String keyLocalDir = OP_OF_MAP + keyDir;
+				String bucket = clusterProperties.getProperty(BUCKET);
+				String keyLocalDir = OP_OF_MAP + File.separator + keyDir;
 				File dir = new File(keyLocalDir);
 				if (dir.exists() && dir.isDirectory()) {
 					File[] files = dir.listFiles();
