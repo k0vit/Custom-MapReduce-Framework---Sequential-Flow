@@ -206,14 +206,12 @@ public class Master {
 			String fileName = file.getFileName();
 			String keyDir = fileName.substring(fileName.indexOf(S3_PATH_SEP) + 1, fileName.lastIndexOf(S3_PATH_SEP) + 1);
 			if (keyDir.endsWith(KEY_DIR_SUFFIX)) {
-				String prefix = fileName.replace(KEY_DIR_SUFFIX, "");
-				key = prefix.substring(prefix.lastIndexOf(S3_PATH_SEP) + 1);
+				key = keyDir.replace(KEY_DIR_SUFFIX, "");
 				if (!keyToSize.containsKey(key)) {
 					log.info("Found key " + key);
 					keyToSize.put(key, 0l);
 				}
 				keyToSize.put(key, keyToSize.get(key) + file.getSize());
-
 			}
 		}
 
