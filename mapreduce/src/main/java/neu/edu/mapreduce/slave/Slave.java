@@ -121,7 +121,7 @@ import neu.edu.utilities.Utilities;
 public class Slave {
 	private static final Logger log = Logger.getLogger(Slave.class.getName());
 
-	public static void main() {
+	public static void main(String[] args) {
 		/**
 		 * step 1
 		 */
