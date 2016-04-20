@@ -444,11 +444,12 @@ class SlaveJob implements Runnable {
 	}
 
 	private void tearDown() {
-		log.info("Shutting off Unirest process");
+		log.info("Shutting off Unirest process and Transfermanager");
 		try {
 			Unirest.shutdown();
+			s3wrapper.shutDown();
 		} catch (IOException e) {
-			log.severe("Failed to shutdown Unirest process. Reason " + e.getMessage());
+			log.severe("Failed to shutdown Unirest process or TransferManager. Reason " + e.getMessage());
 			log.severe("Stacktrace " + Utilities.printStackTrace(e));
 		}
 	}

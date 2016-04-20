@@ -27,9 +27,11 @@ public class S3Wrapper {
 	private static final Logger log = Logger.getLogger(S3Wrapper.class.getName());
 
 	private AmazonS3 s3client;
+	private TransferManager tx;
 	
 	public S3Wrapper(AmazonS3 s3client) {
 		this.s3client = s3client;
+		tx = new TransferManager(s3client);
 	}
 	
 	public List<S3File> getListOfObjects(String s3InputPath) {
@@ -75,7 +77,6 @@ public class S3Wrapper {
 	 * @return
 	 */
 	public String readOutputFromS3(String s3FileFullPath, String localFilePath) {
-		TransferManager tx = new TransferManager(s3client);
 		String simplifiedPath = (s3FileFullPath.replace(S3_URL, ""));
 		int index = simplifiedPath.indexOf(S3_PATH_SEP);
 		String bucketName = simplifiedPath.substring(0, index);
@@ -89,7 +90,6 @@ public class S3Wrapper {
 			log.severe("Failed downloading the file " + localFilePath + ". Reason " + e.getMessage());
 		}
 		log.info("Downloading completed successfully to " + localFilePath);
-		tx.shutdownNow();
 		return localFilePath;
 	}
 
@@ -154,7 +154,6 @@ public class S3Wrapper {
 	 * @return
 	 */
 	public boolean uploadFileS3(String outputS3FullPath, File file) {
-		TransferManager tx = new TransferManager(s3client);
 		String simplifiedPath = removeS3(outputS3FullPath);
 		int index = simplifiedPath.indexOf(S3_PATH_SEP);
 		String bucketName = simplifiedPath.substring(0, index);
@@ -172,7 +171,6 @@ public class S3Wrapper {
 	}
 	
 	public void downloadDir(String s3Path, String localDir) {
-		TransferManager tx = new TransferManager(s3client); 
 		String simplifiedPath = (s3Path.replace(S3_URL, ""));
 		String bucketName = simplifiedPath.substring(0, simplifiedPath.indexOf(S3_PATH_SEP));
 		String key = simplifiedPath.substring(simplifiedPath.indexOf(S3_PATH_SEP) + 1);
@@ -184,5 +182,9 @@ public class S3Wrapper {
 			log.severe("Downloading failed from " + s3Path + ". Reason: " + e.getMessage());
 		}
 		log.info("File downloaded successfully from " + s3Path + " to " + localDir);
+	}
+	
+	public void shutDown() {
+		tx.shutdownNow();
 	}
 }
