@@ -60,7 +60,7 @@ public class Mapper<KEYIN, VALUEIN, KEYOUT, VALUEOUT> {
 
 		@Override
 		public void write(KEYOUT key, VALUEOUT value) {
-			log.info("context write invoked with key " + key.toString() + " and value as " + value.toString());
+			log.fine("context write invoked with key " + key.toString() + " and value as " + value.toString());
 			if (!keyToFile.containsKey(key.toString())) {
 				String filePath = System.getProperty("user.dir") + File.separator + OP_OF_MAP + File.separator
 						+ key + KEY_DIR_SUFFIX  + key + "_" +

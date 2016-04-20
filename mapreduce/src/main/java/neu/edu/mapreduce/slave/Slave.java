@@ -284,7 +284,7 @@ class SlaveJob implements Runnable {
 	@SuppressWarnings("rawtypes")
 	private void processLine(String line, Mapper<?, ?, ?, ?> mapper, Context context, long counter) {
 		try {
-			log.info("Calling map with key as " + counter + " value as " + line);
+			log.fine("Calling map with key as " + counter + " value as " + line);
 			Class<?> KEYIN = Class.forName(LongWritable.class.getName());
 			Object keyIn = KEYIN.getConstructor(Long.class).newInstance(counter);
 			Class<?> VALUEIN = Class.forName(Text.class.getName());
@@ -460,7 +460,7 @@ class SlaveJob implements Runnable {
 				}
 			}
 		}
-		log.info("Iterable for key " + key + " has values " + values);
+		log.fine("Iterable for key " + key + " has values " + values);
 		return values;
 	}
 
