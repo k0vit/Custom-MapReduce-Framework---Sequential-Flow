@@ -4,8 +4,8 @@ chmod 400 ec2key.pem
 
 while IFS="=" read key value
 do
-        key="${key// }"
-        value="${value// }"
+        #key="${key// }"
+        #value="${value// }"
 
         if [ "$key" == "Arguments" ]
         then
@@ -30,8 +30,8 @@ do
         then
                 masterip=$PUIP
         else
-                ssh -i ec2key.pem -o "UserKnownHostsFile=/dev/null" -o "StrictHostKeyChecking=no" ec2-user@$PUIP "java -cp ~/*.jar:. neu.edu.mapreduce.slave.Slave 2>&1" > slave-$PUIP-output.txt &
+                ssh -i ec2key.pem -o "UserKnownHostsFile=/dev/null" -o "StrictHostKeyChecking=no" ec2-user@$PUIP "java -cp ~/*:. neu.edu.mapreduce.slave.Slave 2>&1" > slave-$PUIP-output.txt &
         fi
-done < InstanceDetails.csv
+done < instancedetails.csv
 
-ssh -i ec2key.pem -o "UserKnownHostsFile=/dev/null" -o "StrictHostKeyChecking=no" ec2-user@$masterip "java -cp ~/*.jar:. $main $args 2>&1" > master-$masterip-output.txt
+ssh -i ec2key.pem -o "UserKnownHostsFile=/dev/null" -o "StrictHostKeyChecking=no" ec2-user@$masterip "java -cp ~/*:. $main $args 2>&1" > master-$masterip-output.txt
