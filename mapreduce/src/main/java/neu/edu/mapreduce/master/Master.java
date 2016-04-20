@@ -204,16 +204,16 @@ public class Master {
 		String key = null;
 		for (S3File file : s3Files) {
 			String fileName = file.getFileName();
-			if (fileName.endsWith(KEY_DIR_SUFFIX)) {
+			String keyDir = fileName.substring(fileName.indexOf(S3_PATH_SEP) + 1, fileName.lastIndexOf(S3_PATH_SEP) + 1);
+			if (keyDir.endsWith(KEY_DIR_SUFFIX)) {
 				String prefix = fileName.replace(KEY_DIR_SUFFIX, "");
 				key = prefix.substring(prefix.lastIndexOf(S3_PATH_SEP) + 1);
-				keyToSize.put(key, 0l);
-				log.info("Found key " + key);
-			}
-			else {
-				if (file.getFileName().endsWith(GZ_FILE_EXT)) {
-					keyToSize.put(key, keyToSize.get(key) + file.getSize());
+				if (!keyToSize.containsKey(key)) {
+					log.info("Found key " + key);
+					keyToSize.put(key, 0l);
 				}
+				keyToSize.put(key, keyToSize.get(key) + file.getSize());
+
 			}
 		}
 
