@@ -290,7 +290,7 @@ class SlaveJob implements Runnable {
 			Class<?> VALUEIN = Class.forName(Text.class.getName());
 			Object valueIn = VALUEIN.getConstructor(String.class).newInstance(line);
 			java.lang.reflect.Method mthd = getMapreduceClass(jobConfiguration.getProperty(MAPPER_CLASS))
-					.getMethod(MAP_METHD_NAME, KEYIN, VALUEIN, Mapper.Context.class);
+					.getDeclaredMethod(MAP_METHD_NAME, KEYIN, VALUEIN, Mapper.Context.class);
 			mthd.setAccessible(true);
 			mthd.invoke(mapper, keyIn, valueIn, context);
 		} catch (Exception e) {
@@ -378,7 +378,7 @@ class SlaveJob implements Runnable {
 		Class<?> KEYIN = getReducerInputClass(jobConfiguration.getProperty(MAP_OUTPUT_KEY_CLASS));
 		try {
 			Method mthdr = getMapreduceClass(jobConfiguration.getProperty(REDUCER_CLASS))
-					.getMethod(REDUCE_METHD_NAME, KEYIN, Iterable.class, Reducer.Context.class);
+					.getDeclaredMethod(REDUCE_METHD_NAME, KEYIN, Iterable.class, Reducer.Context.class);
 			Object keyInst = KEYIN.getConstructor(String.class).newInstance(key);
 			log.info("Invoking reduce method");
 			mthdr.setAccessible(true);
@@ -460,6 +460,7 @@ class SlaveJob implements Runnable {
 				}
 			}
 		}
+		log.info("Iterable for key " + key + " has values " + values);
 		return values;
 	}
 
