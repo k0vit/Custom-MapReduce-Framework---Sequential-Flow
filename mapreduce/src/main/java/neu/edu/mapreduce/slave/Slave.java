@@ -355,10 +355,10 @@ class SlaveJob implements Runnable {
 				log.info("Processing key " + key);
 				String keyDirPath = downloadKeyFiles(key);
 				processKey(keyDirPath, key, reducer, context);
-				context.close();
 				Utilities.deleteFolder(new File(keyDirPath));
 			}
 		}
+		context.close();
 	}
 
 	private String downloadKeyFiles(String key) {
