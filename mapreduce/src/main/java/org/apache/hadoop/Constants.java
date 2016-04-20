@@ -36,9 +36,9 @@ public class Constants {
 	}
 
 	public static class ClusterProperties {
-		public static final String ACCESS_KEY = "";
-		public static final String BUCKET = "";
-		public static final String SECRET_KEY = "";
+		public static final String ACCESS_KEY = "AccessKey";
+		public static final String BUCKET = "Bucket";
+		public static final String SECRET_KEY = "SecretKey";
 	}
 
 	public static class CommProperties {
