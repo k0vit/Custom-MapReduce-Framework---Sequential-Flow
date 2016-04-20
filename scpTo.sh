@@ -31,4 +31,4 @@ do
 	scp -i ec2key.pem -o "UserKnownHostsFile=/dev/null" -o "StrictHostKeyChecking=no" cluster.properties ec2-user@$PUIP:~/
 
 	scp -i ec2key.pem -o "UserKnownHostsFile=/dev/null" -o "StrictHostKeyChecking=no" instancedetails.csv ec2-user@$PUIP:~/
-done < InstanceDetails.csv
+done < instancedetails.csv
