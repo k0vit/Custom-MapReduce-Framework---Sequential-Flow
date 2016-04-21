@@ -133,5 +133,16 @@ public class Utilities {
 		e.printStackTrace(new PrintWriter(errors));
 		return errors.toString();
 	}
+
+	public static String getMasterIp(List<Node> nodes) {
+		for (Node node: nodes) {
+			if (!node.isSlave()) {
+				log.info("Master node " + node.getPrivateIp());
+				return node.getPrivateIp();
+			}
+		}
+		
+		return null;
+	}
 }
 

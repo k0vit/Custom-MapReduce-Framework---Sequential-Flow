@@ -164,6 +164,9 @@ class SlaveJob implements Runnable {
 		cleanup(true);
 		processFiles();
 		log.info("All files processed, signalling end of mapper phase");
+		if (masterIp == null) {
+			masterIp = Utilities.getMasterIp(Utilities.readInstanceDetails());
+		}
 		NodeCommWrapper.sendData(masterIp, EOM_URL);
 	}
 
@@ -307,6 +310,9 @@ class SlaveJob implements Runnable {
 		readKeys();
 		processKeys();
 		log.info("All keys processed. Signalling end of reducer phase");
+		if (masterIp == null) {
+			masterIp = Utilities.getMasterIp(Utilities.readInstanceDetails());
+		}
 		NodeCommWrapper.sendData(masterIp, EOR_URL);
 	}
 
