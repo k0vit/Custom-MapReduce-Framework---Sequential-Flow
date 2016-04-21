@@ -16,6 +16,7 @@ import static org.apache.hadoop.Constants.FileConfig.S3_PATH_SEP;
 import static org.apache.hadoop.Constants.FileConfig.TASK_SPLITTER;
 import static org.apache.hadoop.Constants.JobConf.INPUT_PATH;
 import static org.apache.hadoop.Constants.JobConf.JOB_NAME;
+import static org.apache.hadoop.Constants.JobConf.OUTPUT_PATH;
 import static org.apache.hadoop.Constants.MapReduce.NOKEY;
 import static spark.Spark.post;
 
@@ -87,14 +88,13 @@ public class Master {
 	 * 		true if job completed successfully else false
 	 */
 	public boolean submit() {
-
 		setup();
 		startJob();
 		sendFilesToMapper();
 		listenToEndOfMapReduce(EOM_URL, "Mapper");
 		sendKeysToReducer();
 		listenToEndOfMapReduce(EOR_URL, "Reducer");
-
+		s3wrapper.deleteDir(clusterProperties.getProperty(BUCKET) + S3_PATH_SEP + IP_OF_REDUCE);
 		return true;
 	}
 
@@ -102,11 +102,19 @@ public class Master {
 	 * Step 1
 	 */
 	private void setup() {
+
 		clusterProperties = Utilities.readClusterProperties();
 		s3wrapper = new S3Wrapper(new AmazonS3Client(new BasicAWSCredentials
 				(clusterProperties.getProperty("AccessKey"), clusterProperties.getProperty("SecretKey"))));
 		nodes = Utilities.readInstanceDetails();
 		readAndUploadConfiguration();
+		
+		String outputPath = job.getConfiguration().get(OUTPUT_PATH);
+		List<S3File> files = s3wrapper.getListOfObjects(outputPath);
+		if (files != null && files.size() > 0) {
+			log.warning("Output directory " + outputPath + "found. Deleting it");
+			s3wrapper.deleteDir(outputPath);
+		}
 		log.info("Master setup complete");
 	}
 
