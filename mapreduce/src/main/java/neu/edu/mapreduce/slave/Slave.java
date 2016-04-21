@@ -19,6 +19,7 @@ import static org.apache.hadoop.Constants.FileConfig.OP_OF_REDUCE;
 import static org.apache.hadoop.Constants.FileConfig.S3_PATH_SEP;
 import static org.apache.hadoop.Constants.FileConfig.TASK_SPLITTER;
 import static org.apache.hadoop.Constants.JobConf.INPUT_PATH;
+import static org.apache.hadoop.Constants.JobConf.JOB_NAME;
 import static org.apache.hadoop.Constants.JobConf.MAPPER_CLASS;
 import static org.apache.hadoop.Constants.JobConf.MAP_OUTPUT_KEY_CLASS;
 import static org.apache.hadoop.Constants.JobConf.MAP_OUTPUT_VALUE_CLASS;
@@ -169,6 +170,7 @@ class SlaveJob implements Runnable {
 	private void readFiles() {
 		log.info("Listening on " + FILE_URL + " for files from master");
 		post(FILE_URL, (request, response) -> {
+			log.info(Thread.currentThread().getName());
 			masterIp = request.ip();
 			filesToProcess = request.body();
 			log.info("Recieved request on " + FILE_URL + " from " + masterIp);
@@ -199,6 +201,7 @@ class SlaveJob implements Runnable {
 		s3wrapper = new S3Wrapper(new AmazonS3Client(new BasicAWSCredentials
 				(clusterProperties.getProperty(ACCESS_KEY), clusterProperties.getProperty(SECRET_KEY))));
 		jobConfiguration = downloadAndReadJobConfig();
+		Thread.currentThread().setName(jobConfiguration.getProperty(JOB_NAME));
 		log.info("Slave setup done");
 	}
 
@@ -467,6 +470,8 @@ class SlaveJob implements Runnable {
 		log.info("Cleaning directories and shutting Transfermanager");
 		cleanup(false);
 		s3wrapper.shutDown();
+		filesToProcess = null;
+		keysToProcess = null;
 	}
 
 	private void cleanup(boolean isStartup) {
