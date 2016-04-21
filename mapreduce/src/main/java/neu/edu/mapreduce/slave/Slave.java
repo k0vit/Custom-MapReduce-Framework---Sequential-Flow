@@ -166,6 +166,7 @@ class SlaveJob implements Runnable {
 		cleanup(true);
 		processFiles();
 		s3wrapper.waitTillUploadCompletes();
+		cleanup(false);
 		
 		log.info("All files processed, signalling end of mapper phase");
 		if (masterIp == null) {
