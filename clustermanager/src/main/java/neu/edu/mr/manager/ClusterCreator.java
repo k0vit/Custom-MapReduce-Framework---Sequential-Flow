@@ -12,10 +12,13 @@ import com.amazonaws.AmazonServiceException;
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.ec2.AmazonEC2Client;
+import com.amazonaws.services.ec2.model.AttachVolumeRequest;
 import com.amazonaws.services.ec2.model.AuthorizeSecurityGroupIngressRequest;
 import com.amazonaws.services.ec2.model.CreateKeyPairRequest;
 import com.amazonaws.services.ec2.model.CreateKeyPairResult;
 import com.amazonaws.services.ec2.model.CreateSecurityGroupRequest;
+import com.amazonaws.services.ec2.model.CreateVolumeRequest;
+import com.amazonaws.services.ec2.model.CreateVolumeResult;
 import com.amazonaws.services.ec2.model.DescribeInstancesRequest;
 import com.amazonaws.services.ec2.model.DescribeInstancesResult;
 import com.amazonaws.services.ec2.model.Instance;
@@ -62,6 +65,7 @@ public class ClusterCreator {
 					+ ", " + Main.keyName);
 			RunInstancesResult result = amazonEC2Client.runInstances(runInstancesRequest);
 			writeInstanceDetails(result.getReservation().getReservationId());
+			attachVolume(result.getReservation().getReservationId());
 
 			amazonEC2Client.shutdown();
 
@@ -70,6 +74,26 @@ public class ClusterCreator {
 		catch (Exception e) {
 			System.err.println("Cluster creation failed. Reason:" + e.getMessage());
 			return false;
+		}
+	}
+
+	private void attachVolume(String reservationId) {
+		for (Reservation reservation: amazonEC2Client.describeInstances().getReservations()) {
+			if (reservation.getReservationId().equals(reservationId)) {
+				for (Instance inst : reservation.getInstances()) {
+					CreateVolumeRequest createVolumeRequest = new CreateVolumeRequest()
+							.withAvailabilityZone(inst.getPlacement().getAvailabilityZone())
+							.withSize(20);
+
+					CreateVolumeResult createVolumeResult = amazonEC2Client.createVolume(createVolumeRequest);
+
+					AttachVolumeRequest attachRequest = new AttachVolumeRequest()
+							.withInstanceId(inst.getInstanceId())
+					.withVolumeId(createVolumeResult.getVolume().getVolumeId());
+
+					amazonEC2Client.attachVolume(attachRequest);
+				}
+			}
 		}
 	}
 
@@ -102,7 +126,7 @@ public class ClusterCreator {
 								LOGGER.log(Level.FINE, "State changed to " + state);
 							}
 						}
-						
+
 						// create InstnaceDetail.csv with all isntance details
 						StringBuilder instanceDetails = new StringBuilder();
 						instanceDetails.append(inst.getInstanceId()).append(",");
