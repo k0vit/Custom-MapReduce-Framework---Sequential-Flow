@@ -155,7 +155,6 @@ class SlaveJob implements Runnable {
 
 	@Override
 	public void run() {
-		cleanup(true);
 		map();
 		reduce();
 		tearDown();
@@ -165,6 +164,7 @@ class SlaveJob implements Runnable {
 		log.info("Starting map task");
 		readFiles();
 		setup();
+		cleanup(true);
 		processFiles();
 		log.info("All files processed, signalling end of mapper phase");
 		NodeCommWrapper.sendData(masterIp, EOM_URL);
