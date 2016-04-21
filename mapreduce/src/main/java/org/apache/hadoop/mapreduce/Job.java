@@ -77,4 +77,8 @@ public class Job {
 		Master master = new Master(this);
 		return master.submit();
 	}
+
+	public String getJobName() {
+		return conf.get(JOB_NAME);
+	}
 }

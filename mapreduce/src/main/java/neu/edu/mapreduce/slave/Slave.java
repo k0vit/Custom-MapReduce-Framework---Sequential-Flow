@@ -22,6 +22,7 @@ import static org.apache.hadoop.Constants.JobConf.INPUT_PATH;
 import static org.apache.hadoop.Constants.JobConf.MAPPER_CLASS;
 import static org.apache.hadoop.Constants.JobConf.MAP_OUTPUT_KEY_CLASS;
 import static org.apache.hadoop.Constants.JobConf.MAP_OUTPUT_VALUE_CLASS;
+import static org.apache.hadoop.Constants.JobConf.OUTPUT_PATH;
 import static org.apache.hadoop.Constants.JobConf.REDUCER_CLASS;
 import static org.apache.hadoop.Constants.MapReduce.MAP_METHD_NAME;
 import static org.apache.hadoop.Constants.MapReduce.NOKEY;
@@ -53,6 +54,7 @@ import com.amazonaws.services.s3.AmazonS3Client;
 import com.mashape.unirest.http.Unirest;
 
 import neu.edu.utilities.NodeCommWrapper;
+import neu.edu.utilities.S3File;
 import neu.edu.utilities.S3Wrapper;
 import neu.edu.utilities.Utilities;
 
@@ -153,6 +155,7 @@ class SlaveJob implements Runnable {
 
 	@Override
 	public void run() {
+		cleanup(true);
 		map();
 		reduce();
 		tearDown();
@@ -467,11 +470,28 @@ class SlaveJob implements Runnable {
 	private void tearDown() {
 		log.info("Shutting off Unirest process and Transfermanager");
 		try {
+			cleanup(false);
 			Unirest.shutdown();
 			s3wrapper.shutDown();
 		} catch (IOException e) {
 			log.severe("Failed to shutdown Unirest process or TransferManager. Reason " + e.getMessage());
 			log.severe("Stacktrace " + Utilities.printStackTrace(e));
+		}
+	}
+
+	private void cleanup(boolean isStartup) {
+		Utilities.deleteFolder(new File(IP_OF_MAP));
+		Utilities.deleteFolder(new File(OP_OF_MAP));
+		Utilities.deleteFolder(new File(IP_OF_REDUCE));
+		Utilities.deleteFolder(new File(OP_OF_REDUCE));
+		s3wrapper.deleteDir(clusterProperties.getProperty(BUCKET) + S3_PATH_SEP + IP_OF_REDUCE);
+		
+		if (isStartup) {
+			List<S3File> files = s3wrapper.getListOfObjects(jobConfiguration.getProperty(OUTPUT_PATH));
+			if (files != null && files.size() > 0) {
+				log.warning("Output directory " + jobConfiguration.getProperty(OUTPUT_PATH) + "found. Deleting it");
+				s3wrapper.deleteDir(jobConfiguration.getProperty(OUTPUT_PATH));
+			}
 		}
 	}
 }

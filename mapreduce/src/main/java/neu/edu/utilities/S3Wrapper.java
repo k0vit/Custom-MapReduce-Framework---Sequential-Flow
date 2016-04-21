@@ -10,7 +10,12 @@ import java.util.logging.Logger;
 
 import com.amazonaws.AmazonClientException;
 import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.model.DeleteObjectsRequest;
+import com.amazonaws.services.s3.model.DeleteObjectsRequest.KeyVersion;
+import com.amazonaws.services.s3.model.DeleteObjectsResult;
 import com.amazonaws.services.s3.model.ListObjectsRequest;
+import com.amazonaws.services.s3.model.MultiObjectDeleteException;
+import com.amazonaws.services.s3.model.MultiObjectDeleteException.DeleteError;
 import com.amazonaws.services.s3.model.ObjectListing;
 import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.amazonaws.services.s3.model.S3ObjectSummary;
@@ -186,5 +191,34 @@ public class S3Wrapper {
 	
 	public void shutDown() {
 		tx.shutdownNow();
+	}
+
+	public void deleteDir(String s3DirPath) {
+		log.info("Deleting directory " + s3DirPath);
+		List<S3File> files = getListOfObjects(s3DirPath);
+		List<KeyVersion> keys = new ArrayList<KeyVersion>(60);
+		for (S3File file: files) {
+			keys.add(new KeyVersion(file.getFileName()));
+		}
+		
+		String simplifiedPath = (s3DirPath.replace(S3_URL, ""));
+		String bucketName = simplifiedPath.substring(0, simplifiedPath.indexOf(S3_PATH_SEP));
+		DeleteObjectsRequest multiObjectDeleteRequest = new DeleteObjectsRequest(bucketName);
+		multiObjectDeleteRequest.setKeys(keys);
+
+		try {
+		    DeleteObjectsResult delObjRes = s3client.deleteObjects(multiObjectDeleteRequest);
+		    log.info(String.format("Successfully deleted all the %s items",delObjRes.getDeletedObjects().size()));
+		    			
+		} catch (MultiObjectDeleteException e) {
+			log.severe(String.format("%s", e.getMessage()));
+			log.severe(String.format("No. of objects successfully deleted = %s", e.getDeletedObjects().size()));
+			log.severe(String.format("No. of objects failed to delete = %s", e.getErrors().size()));
+			log.severe(String.format("Printing error data..."));
+			for (DeleteError deleteError : e.getErrors()){
+				log.severe(String.format("Object Key: %s\t%s\t%s", 
+			            deleteError.getKey(), deleteError.getCode(), deleteError.getMessage()));
+			} 
+		}
 	}
 }

@@ -25,9 +25,9 @@ import java.util.logging.Logger;
 
 import neu.edu.mapreduce.common.Node;
 public class Utilities {
-	
+
 	private static final Logger log = Logger.getLogger(Utilities.class.getName());
-	
+
 	private Utilities() {};
 
 	public static List<Node> readInstanceDetails() {
@@ -46,7 +46,7 @@ public class Utilities {
 		catch (Exception e) {
 			log.severe("Failed to read the instance details file. Reason " + e.getMessage());
 		}
-		
+
 		log.info("Nodes " + nodeLst);
 		return nodeLst;
 	}
@@ -106,17 +106,19 @@ public class Utilities {
 
 	public static void deleteFolder(File folder) {
 		log.info("Deleting folder " + folder.getAbsolutePath());
-		File[] files = folder.listFiles();
-		if(files!=null) {
-			for(File f: files) {
-				if(f.isDirectory()) {
-					deleteFolder(f);
-				} else {
-					f.delete();
+		if (folder.exists() && folder.isDirectory()) {
+			File[] files = folder.listFiles();
+			if(files!=null) {
+				for(File f: files) {
+					if(f.isDirectory()) {
+						deleteFolder(f);
+					} else {
+						f.delete();
+					}
 				}
 			}
+			folder.delete();
 		}
-		folder.delete();
 		log.info("Folder deleted ? " + !folder.exists());
 	}
 
@@ -125,7 +127,7 @@ public class Utilities {
 		new File(inputDir).mkdirs();
 		new File(outputDir).mkdirs();
 	}
-	
+
 	public static String printStackTrace(Exception e) {
 		StringWriter errors = new StringWriter();
 		e.printStackTrace(new PrintWriter(errors));
