@@ -204,6 +204,8 @@ public class S3Wrapper {
 			}
 			log.info("Upload completed");
 		}
+		
+		uploadHandlerLst = new ArrayList<>();
 	}
 
 	/*public boolean uploadFilesToS3(String outputS3FullPath, List<File> files) {

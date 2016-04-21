@@ -124,6 +124,8 @@ public class Mapper<KEYIN, VALUEIN, KEYOUT, VALUEOUT> {
 			log.info("Closing all the keys related to this file");
 			writeToFile();
 			keyValueStore = new HashMap<>();
+			s3wrapper.waitTillUploadCompletes();
+			Utilities.deleteFolder(new File(OP_OF_MAP));
 		}	
 
 		private void writeToFile() {
