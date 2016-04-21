@@ -5,6 +5,7 @@ import static org.apache.hadoop.Constants.FileConfig.S3_URL;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.logging.Logger;
 
@@ -33,6 +34,7 @@ public class S3Wrapper {
 
 	private AmazonS3 s3client;
 	private TransferManager tx;
+	private List<Upload> uploadHandlerLst = new LinkedList<>();
 
 	public S3Wrapper(AmazonS3 s3client) {
 		this.s3client = s3client;
@@ -154,6 +156,10 @@ public class S3Wrapper {
 		return fileString;
 	}
 
+	public boolean uploadFileS3(String outputS3FullPath, File file) {
+		return uploadFileS3(outputS3FullPath, file, true);
+	}
+
 	/**
 	 * Upload the file to S3 using Transfer Manager.
 	 * 
@@ -162,12 +168,50 @@ public class S3Wrapper {
 	 * @param instanceId
 	 * @return
 	 */
-	public boolean uploadFileS3(String outputS3FullPath, File file) {
+	public boolean uploadFileS3(String outputS3FullPath, File file, boolean shouldWaitForCompletetion) {
 		String simplifiedPath = removeS3(outputS3FullPath);
 		int index = simplifiedPath.indexOf(S3_PATH_SEP);
 		String bucketName = simplifiedPath.substring(0, index);
 		String key = simplifiedPath.substring(index + 1);
 		log.fine("Uploading file " + file.getAbsolutePath() + " to bucket " + bucketName + " with key as " + key);
+		Upload up = tx.upload(bucketName, key, file);
+		if (shouldWaitForCompletetion) {
+			try {
+				up.waitForCompletion();
+			} catch (AmazonClientException | InterruptedException e) {
+				log.severe("Failed uploading the file " + outputS3FullPath + ". Reason " + e.getMessage());
+				return false;
+			}
+			log.fine("File uploaded to S3 at the path: " + outputS3FullPath);
+		}
+		else {
+			uploadHandlerLst.add(up);
+		}
+		return true;
+	}
+
+	public void waitTillUploadCompletes() {
+		log.info("Number of uploads pending = " + uploadHandlerLst.size());
+		if (uploadHandlerLst.size() > 0) {
+			for (Upload up: uploadHandlerLst) {
+				if (up != null && !up.isDone()) {
+					try {
+						up.waitForCompletion();
+					} catch (AmazonClientException | InterruptedException e) {
+						log.severe("Failed uploading the file. Reason " + e.getMessage());
+					}
+				}
+			}
+			log.info("Upload completed");
+		}
+	}
+
+	/*public boolean uploadFilesToS3(String outputS3FullPath, List<File> files) {
+		String simplifiedPath = removeS3(outputS3FullPath);
+		int index = simplifiedPath.indexOf(S3_PATH_SEP);
+		String bucketName = simplifiedPath.substring(0, index);
+		String key = simplifiedPath.substring(index + 1);
+		log.fine("Uploading files= " + files.size() + " to bucket " + bucketName + " with key as " + key);
 		Upload up = tx.upload(bucketName, key, file);
 		try {
 			up.waitForCompletion();
@@ -177,7 +221,7 @@ public class S3Wrapper {
 		}
 		log.fine("File uploaded to S3 at the path: " + outputS3FullPath);
 		return true;
-	}
+	}*/
 
 	public void downloadDir(String s3Path, String localDir) {
 		String simplifiedPath = (s3Path.replace(S3_URL, ""));
