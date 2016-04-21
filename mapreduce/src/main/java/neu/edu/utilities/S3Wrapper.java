@@ -196,6 +196,12 @@ public class S3Wrapper {
 	public void deleteDir(String s3DirPath) {
 		log.info("Deleting directory " + s3DirPath);
 		List<S3File> files = getListOfObjects(s3DirPath);
+		
+		if (files == null || files.size() == 0) {
+			log.info("Directory " + s3DirPath + " not found. Hence nothing to delete.");
+			return;
+		}
+		
 		List<KeyVersion> keys = new ArrayList<KeyVersion>(60);
 		for (S3File file: files) {
 			keys.add(new KeyVersion(file.getFileName()));
