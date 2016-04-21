@@ -146,9 +146,9 @@ class SlaveJob implements Runnable {
 	private Properties clusterProperties;
 	private S3Wrapper s3wrapper;
 	private Properties jobConfiguration;
-	private String masterIp;
-	private String filesToProcess;
-	private String keysToProcess;
+	private static String masterIp;
+	private static String filesToProcess;
+	private static String keysToProcess;
 
 	@Override
 	public void run() {
