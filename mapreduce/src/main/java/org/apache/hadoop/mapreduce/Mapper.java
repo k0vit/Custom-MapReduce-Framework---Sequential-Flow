@@ -14,7 +14,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.LinkedHashMap;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.Properties;
@@ -58,7 +58,7 @@ public class Mapper<KEYIN, VALUEIN, KEYOUT, VALUEOUT> {
 					(clusterProperties.getProperty(ACCESS_KEY), clusterProperties.getProperty(SECRET_KEY))));
 			slaveId = Utilities.getSlaveId(Utilities.readInstanceDetails());
 			log.info("Initializing slave mapper task with Slave id " + slaveId);
-			keyValueStore = new LinkedHashMap<>();
+			keyValueStore = new HashMap<>();
 		}
 
 		/*@Override
@@ -120,13 +120,15 @@ public class Mapper<KEYIN, VALUEIN, KEYOUT, VALUEOUT> {
 			keyValueStore.get(keyStr).add(valueStr);
 		}
 
-
 		public void close() {
+			log.info("Closing all the keys related to this file");
 			writeToFile();
+			keyValueStore = new HashMap<>();
 		}	
 
 		private void writeToFile() {
 			String filePath = null;
+			log.info("Closing " + keyValueStore.size() + " keys");
 			for (String key: keyValueStore.keySet()) {
 				String keyStr = key.toString();
 				filePath = System.getProperty("user.dir") + File.separator + OP_OF_MAP + File.separator
@@ -146,13 +148,12 @@ public class Mapper<KEYIN, VALUEIN, KEYOUT, VALUEOUT> {
 				}
 
 				try(BufferedWriter bw = new BufferedWriter(new FileWriter(filePath, true))) {
-					for (String value: keyValueStore.get(keyStr.toString())) {
+					for (String value: keyValueStore.get(keyStr)) {
 						bw.write(value + System.getProperty("line.separator"));
 					}
 				}
 				catch (Exception e) {
-					log.severe("Failed to write for key " + keyStr.toString()
-					+ "Reason " + e.getMessage());
+					log.severe("Failed to write for key " + keyStr + "Reason " + e.getMessage());
 				}
 				
 				uploadToS3(keyStr);
@@ -160,7 +161,7 @@ public class Mapper<KEYIN, VALUEIN, KEYOUT, VALUEOUT> {
 		}
 
 		private void uploadToS3(String key) {
-			log.fine("uploading mapper output file with respect to key " + key);
+			log.info("uploading mapper output file with respect to key " + key);
 			String keyDir = (key + KEY_DIR_SUFFIX);
 			String prefix = IP_OF_REDUCE + File.separator + keyDir;
 			String bucket = clusterProperties.getProperty(BUCKET);
