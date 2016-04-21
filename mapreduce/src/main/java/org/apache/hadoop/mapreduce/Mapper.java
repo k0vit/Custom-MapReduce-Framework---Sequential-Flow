@@ -67,7 +67,7 @@ public class Mapper<KEYIN, VALUEIN, KEYOUT, VALUEOUT> {
 						(new SimpleDateFormat("yyyyMMddhhmm").format(new Date())) + slaveId;
 
 				try {
-					log.info("Creating mapper output file " + filePath);
+					log.fine("Creating mapper output file " + filePath);
 					File f = new File(filePath);
 					if (!f.exists()) {
 						f.getParentFile().mkdirs();
@@ -107,7 +107,7 @@ public class Mapper<KEYIN, VALUEIN, KEYOUT, VALUEOUT> {
 
 		private void uploadToS3() {
 			for(String key: keyToFile.keySet()) {
-				log.info("uploading mapper output file with respect to key " + key);
+				log.fine("uploading mapper output file with respect to key " + key);
 				String keyDir = (key + KEY_DIR_SUFFIX);
 				String prefix = IP_OF_REDUCE + File.separator + keyDir;
 				String bucket = clusterProperties.getProperty(BUCKET);

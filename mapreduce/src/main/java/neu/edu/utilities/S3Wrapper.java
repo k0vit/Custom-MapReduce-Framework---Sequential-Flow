@@ -116,7 +116,7 @@ public class S3Wrapper {
 		String remote = local.getName();
 		try {
 			s3client.putObject(new PutObjectRequest(folder, remote, local));
-			log.info("Uploaded file " + file + " to s3 location " + bucket);
+			log.fine("Uploaded file " + file + " to s3 location " + bucket);
 		} catch (Exception e) {
 			log.severe("Failed to upload file: " + local.getName() + " :" + e.getMessage());
 		}
@@ -163,7 +163,7 @@ public class S3Wrapper {
 		int index = simplifiedPath.indexOf(S3_PATH_SEP);
 		String bucketName = simplifiedPath.substring(0, index);
 		String key = simplifiedPath.substring(index + 1);
-		log.info("Uploading file " + file.getAbsolutePath() + " to bucket " + bucketName + " with key as " + key);
+		log.fine("Uploading file " + file.getAbsolutePath() + " to bucket " + bucketName + " with key as " + key);
 		Upload up = tx.upload(bucketName, key, file);
 		try {
 			up.waitForCompletion();
@@ -171,7 +171,7 @@ public class S3Wrapper {
 			log.severe("Failed uploading the file " + outputS3FullPath + ". Reason " + e.getMessage());
 			return false;
 		}
-		log.info("File uploaded to S3 at the path: " + outputS3FullPath);
+		log.fine("File uploaded to S3 at the path: " + outputS3FullPath);
 		return true;
 	}
 	

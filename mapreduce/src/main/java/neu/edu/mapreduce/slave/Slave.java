@@ -269,7 +269,7 @@ class SlaveJob implements Runnable {
 	}
 
 	private Mapper<?, ?, ?, ?> instantiateMapper() {
-		log.info("Instanting Mapper");
+		log.fine("Instanting Mapper");
 		Mapper<?,?,?,?> mapper = null;
 		try {
 			Class<?> cls = getMapreduceClass(jobConfiguration.getProperty(MAPPER_CLASS));
@@ -361,7 +361,7 @@ class SlaveJob implements Runnable {
 		Reducer<?, ?, ?, ?>.Context context = reducer.new Context();
 		for (String key: keys) {
 			if (!key.equals(NOKEY)) {
-				log.info("Processing key " + key);
+				log.fine("Processing key " + key);
 				String keyDirPath = downloadKeyFiles(key);
 				processKey(keyDirPath, key, reducer, context);
 				Utilities.deleteFolder(new File(keyDirPath));
@@ -371,13 +371,13 @@ class SlaveJob implements Runnable {
 	}
 
 	private String downloadKeyFiles(String key) {
-		log.info("Download files for key " + key);
+		log.fine("Download files for key " + key);
 		String keyDir = (key + KEY_DIR_SUFFIX);
 		String keyDirLocalPath = IP_OF_REDUCE + File.separator + keyDir;
 		String s3KeyDir = clusterProperties.getProperty(BUCKET) + S3_PATH_SEP + IP_OF_REDUCE + S3_PATH_SEP + keyDir;
 		s3KeyDir = s3KeyDir.substring(0, s3KeyDir.lastIndexOf(S3_PATH_SEP));
 		s3wrapper.downloadDir(s3KeyDir, System.getProperty("user.dir"));
-		log.info("key dir local path " + keyDirLocalPath);
+		log.fine("key dir local path " + keyDirLocalPath);
 		return keyDirLocalPath;
 	}
 
@@ -389,7 +389,7 @@ class SlaveJob implements Runnable {
 			Method mthdr = getMapreduceClass(jobConfiguration.getProperty(REDUCER_CLASS))
 					.getDeclaredMethod(REDUCE_METHD_NAME, KEYIN, Iterable.class, Reducer.Context.class);
 			Object keyInst = KEYIN.getConstructor(String.class).newInstance(key);
-			log.info("Invoking reduce method");
+			log.fine("Invoking reduce method");
 			mthdr.setAccessible(true);
 			mthdr.invoke(reducer, keyInst, getIterableValue(keyDirPath, key), context);
 		}
@@ -448,13 +448,13 @@ class SlaveJob implements Runnable {
 	}
 
 	private List<Object> getIterableValue(String keyDirPath, String key) {
-		log.info("Creating iterator for key " + key + " by reading all the file records from " + keyDirPath);
+		log.fine("Creating iterator for key " + key + " by reading all the file records from " + keyDirPath);
 		File[] files  = new File(System.getProperty("user.dir") + File.separator + keyDirPath).listFiles();
-		log.info("There are " + files.length + " associated with key " + key);
+		log.fine("There are " + files.length + " associated with key " + key);
 		List<Object> values = new LinkedList<>();
 		Class<?> VALUEIN = getReducerInputClass(jobConfiguration.getProperty(MAP_OUTPUT_VALUE_CLASS));
 		for (File file : files) {
-			log.info("Fetching all records from file " + file.getAbsolutePath());
+			log.fine("Fetching all records from file " + file.getAbsolutePath());
 			if (file.getName().startsWith(key)) {
 				try (BufferedReader br = new BufferedReader(new FileReader(file))){
 					String line = null;
