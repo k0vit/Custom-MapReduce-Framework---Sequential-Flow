@@ -27,7 +27,7 @@ public class Constants {
 		public static final String S3_PATH_SEP = "/";
 		public static final String GZ_FILE_EXT = ".gz";
 		public static final String S3_URL = "s3://";
-		public static final String TASK_SPLITTER = ",";
+		public static final String TASK_SPLITTER = ";";
 		public static final String OP_OF_MAP = "OutputOfMap";
 		public static final String IP_OF_MAP = "InputOfMap";
 		public static final String IP_OF_REDUCE = "InputOfReducer";
