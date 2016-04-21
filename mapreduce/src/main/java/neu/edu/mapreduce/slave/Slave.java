@@ -32,7 +32,6 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileReader;
-import java.io.IOException;
 import java.io.InputStreamReader;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
@@ -50,7 +49,6 @@ import org.apache.hadoop.mapreduce.Reducer;
 
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.services.s3.AmazonS3Client;
-import com.mashape.unirest.http.Unirest;
 
 import neu.edu.utilities.NodeCommWrapper;
 import neu.edu.utilities.S3Wrapper;
@@ -466,15 +464,9 @@ class SlaveJob implements Runnable {
 	}
 
 	private void tearDown() {
-		log.info("Shutting off Unirest process and Transfermanager");
-		try {
-			cleanup(false);
-			Unirest.shutdown();
-			s3wrapper.shutDown();
-		} catch (IOException e) {
-			log.severe("Failed to shutdown Unirest process or TransferManager. Reason " + e.getMessage());
-			log.severe("Stacktrace " + Utilities.printStackTrace(e));
-		}
+		log.info("Cleaning directories and shutting Transfermanager");
+		cleanup(false);
+		s3wrapper.shutDown();
 	}
 
 	private void cleanup(boolean isStartup) {
