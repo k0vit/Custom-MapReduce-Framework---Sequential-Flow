@@ -28,7 +28,7 @@ public class Configuration {
 
 	public String get(String key) {
 		String value = properties.get(key); 
-		log.info("Property fetched with key " + key + "and value as " + value);
+		log.fine("Property fetched with key " + key + "and value as " + value);
 		return value;
 	}
 }
