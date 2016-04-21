@@ -68,7 +68,7 @@ public class S3Wrapper {
 
 		while (listing.isTruncated()) {
 			listing = s3client.listNextBatchOfObjects(listing);
-			summaries.addAll (listing.getObjectSummaries());
+			summaries.addAll(listing.getObjectSummaries());
 		}
 
 		for (S3ObjectSummary summary : summaries) {
@@ -206,19 +206,28 @@ public class S3Wrapper {
 			return;
 		}
 
+		String simplifiedPath = (s3DirPath.replace(S3_URL, ""));
+		String bucketName = simplifiedPath.substring(0, simplifiedPath.indexOf(S3_PATH_SEP));
+
+		log.info("There are " + files.size() + " object to be deleted");
 		List<KeyVersion> keys = new ArrayList<KeyVersion>(60);
 		for (S3File file: files) {
 			keys.add(new KeyVersion(file.getFileName()));
+			if (keys.size() == 1000) {
+				log.info("Deleting 1000 objects from " + s3DirPath);
+				deleteObjects(keys, bucketName);
+			}
 		}
+		deleteObjects(keys, bucketName);
+	}
 
-		String simplifiedPath = (s3DirPath.replace(S3_URL, ""));
-		String bucketName = simplifiedPath.substring(0, simplifiedPath.indexOf(S3_PATH_SEP));
+	private void deleteObjects(List<KeyVersion> keys, String bucketName) {
 		DeleteObjectsRequest multiObjectDeleteRequest = new DeleteObjectsRequest(bucketName);
 		multiObjectDeleteRequest.setKeys(keys);
-
 		try {
 			DeleteObjectsResult delObjRes = s3client.deleteObjects(multiObjectDeleteRequest);
 			log.info(String.format("Successfully deleted all the %s items",delObjRes.getDeletedObjects().size()));
+			keys.clear();
 
 		} catch (MultiObjectDeleteException e) {
 			log.severe(String.format("%s", e.getMessage()));
