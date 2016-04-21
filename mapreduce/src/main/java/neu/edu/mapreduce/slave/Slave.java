@@ -147,8 +147,8 @@ class SlaveJob implements Runnable {
 	private S3Wrapper s3wrapper;
 	private Properties jobConfiguration;
 	private String masterIp;
-	private static String filesToProcess;
-	private static String keysToProcess;
+	private String filesToProcess;
+	private String keysToProcess;
 
 	@Override
 	public void run() {
@@ -170,7 +170,7 @@ class SlaveJob implements Runnable {
 	private void readFiles() {
 		log.info("Listening on " + FILE_URL + " for files from master");
 		post(FILE_URL, (request, response) -> {
-			log.info(Thread.currentThread().getName());
+			log.info("Current thread " + Thread.currentThread().getName());
 			masterIp = request.ip();
 			filesToProcess = request.body();
 			log.info("Recieved request on " + FILE_URL + " from " + masterIp);
@@ -313,6 +313,7 @@ class SlaveJob implements Runnable {
 	private void readKeys() {
 		log.info("Listening on " + KEY_URL);
 		post(KEY_URL, (request, response) -> {
+			log.info("Current thread " + Thread.currentThread().getName());
 			masterIp = request.ip();
 			keysToProcess = request.body();
 			log.info("Recieved request from " + masterIp + " with data as " + keysToProcess);
