@@ -149,6 +149,8 @@ class SlaveJob implements Runnable {
 	private static String masterIp;
 	private static String filesToProcess;
 	private static String keysToProcess;
+	private int totalTaskCount;
+	private int currentTaskCount;
 
 	@Override
 	public void run() {
@@ -168,6 +170,8 @@ class SlaveJob implements Runnable {
 			masterIp = Utilities.getMasterIp(Utilities.readInstanceDetails());
 		}
 		NodeCommWrapper.sendData(masterIp, EOM_URL);
+		totalTaskCount = 0;
+		currentTaskCount = 0;
 	}
 
 	private void readFiles() {
@@ -236,7 +240,9 @@ class SlaveJob implements Runnable {
 		String files[] = filesToProcess.split(TASK_SPLITTER);
 		Mapper<?,?,?,?> mapper = instantiateMapper();
 		Context context = mapper.new Context();
+		totalTaskCount = files.length;
 		for (String file: files) {
+			log.info("Processing file " + ++currentTaskCount + " out of " + totalTaskCount);
 			String localFilePath = downloadFile(file);
 			processFile(localFilePath, mapper, context);
 			context.close();
@@ -359,7 +365,9 @@ class SlaveJob implements Runnable {
 		String[] keys = keysToProcess.split(TASK_SPLITTER);
 		Reducer<?,?,?,?> reducer = getReducerInstance();
 		Reducer<?, ?, ?, ?>.Context context = reducer.new Context();
+		totalTaskCount = keys.length;
 		for (String key: keys) {
+			log.info("Processing file " + ++currentTaskCount + " out of " + totalTaskCount);
 			if (!key.equals(NOKEY)) {
 				log.fine("Processing key " + key);
 				String keyDirPath = downloadKeyFiles(key);

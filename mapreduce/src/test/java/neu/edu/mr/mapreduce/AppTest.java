@@ -1,8 +1,15 @@
 package neu.edu.mr.mapreduce;
 
+import java.util.List;
+
+import com.amazonaws.auth.BasicAWSCredentials;
+import com.amazonaws.services.s3.AmazonS3Client;
+
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
+import neu.edu.utilities.S3File;
+import neu.edu.utilities.S3Wrapper;
 
 /**
  * Unit test for simple App.
@@ -29,10 +36,11 @@ extends TestCase
 	}
 	
 	public void testListObjects() {
-		/*S3Wrapper s = new S3Wrapper(new AmazonS3Client(new BasicAWSCredentials
-				("AKIAI75MBYH4GVVFWZJQ", "QTwW8fnOnsGcK6OCvGuowDkpS/J/4bSCOv3TQIYh")));
+		S3Wrapper s = new S3Wrapper(new AmazonS3Client(new BasicAWSCredentials
+				("AKIAJF77SYNJS5ZLR2TA", "t+cWGKYOOplu1ib53CIFf7XgH56brRsZd3HKsl00")));
 
-		s.deleteDir("s3://kovit/outputf");*/
+		List<S3File> k = s.getListOfObjects("s3://kovit2/InputOfReducer");
+		System.out.println(k.size());
 	}
 
 	/*public void testFileDistr() {

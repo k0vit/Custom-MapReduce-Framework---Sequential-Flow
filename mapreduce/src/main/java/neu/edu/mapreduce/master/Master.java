@@ -194,6 +194,8 @@ public class Master {
 		while (noOfMapReduceDone.get() != slaveCount) {
 			log.fine("Waiting at " + url + " from all slaves");
 		}
+		
+		log.info("All the " + taskType + " have ended");
 
 		noOfMapReduceDone.set(0);
 	}
@@ -203,6 +205,7 @@ public class Master {
 	 */
 	private void sendKeysToReducer() {
 		List<S3File> s3Files = s3wrapper.getListOfObjects(clusterProperties.get(BUCKET) + S3_PATH_SEP + IP_OF_REDUCE);
+		log.fine("");
 		Map<String, Long> keyToSize = new HashMap<>();
 		String key = null;
 		for (S3File file : s3Files) {
@@ -211,7 +214,7 @@ public class Master {
 			if (keyDir.endsWith(KEY_DIR_SUFFIX)) {
 				key = keyDir.replace(KEY_DIR_SUFFIX, "");
 				if (!keyToSize.containsKey(key)) {
-					log.info("Found key " + key);
+					log.fine("Found key " + key);
 					keyToSize.put(key, 0l);
 				}
 				keyToSize.put(key, keyToSize.get(key) + file.getSize());

@@ -33,12 +33,12 @@ public class S3Wrapper {
 
 	private AmazonS3 s3client;
 	private TransferManager tx;
-	
+
 	public S3Wrapper(AmazonS3 s3client) {
 		this.s3client = s3client;
 		tx = new TransferManager(s3client);
 	}
-	
+
 	public List<S3File> getListOfObjects(String s3InputPath) {
 		log.info("Getting list of objects from " + s3InputPath);
 		String simplifiedPath = removeS3(s3InputPath);
@@ -57,20 +57,24 @@ public class S3Wrapper {
 	 */
 	public List<S3File> getListOfObjects(String bucketName, String prefix) {
 		log.info(String.format("Requesting object listing for s3://%s/%s", bucketName, prefix));
-		
+
 		ListObjectsRequest request = new ListObjectsRequest();
 		request.withBucketName(bucketName);
 		request.withPrefix(prefix);
-		
+
 		List<S3File> s3Files = new ArrayList<S3File>();
-		ObjectListing listing = null;
-		do {
-			listing = s3client.listObjects(request);
-			for (S3ObjectSummary summary : listing.getObjectSummaries()) {
-				s3Files.add(new S3File(summary.getKey(), summary.getSize()));
-			}
-		} while (listing.isTruncated());
-		
+		ObjectListing listing = s3client.listObjects(request);
+		List<S3ObjectSummary> summaries = listing.getObjectSummaries();
+
+		while (listing.isTruncated()) {
+			listing = s3client.listNextBatchOfObjects(listing);
+			summaries.addAll (listing.getObjectSummaries());
+		}
+
+		for (S3ObjectSummary summary : summaries) {
+			s3Files.add(new S3File(summary.getKey(), summary.getSize()));
+		}
+
 		return s3Files;
 	}
 
@@ -122,7 +126,7 @@ public class S3Wrapper {
 		}
 		return true;
 	}
-	
+
 	/**
 	 * Utility method.
 	 * 
@@ -174,7 +178,7 @@ public class S3Wrapper {
 		log.fine("File uploaded to S3 at the path: " + outputS3FullPath);
 		return true;
 	}
-	
+
 	public void downloadDir(String s3Path, String localDir) {
 		String simplifiedPath = (s3Path.replace(S3_URL, ""));
 		String bucketName = simplifiedPath.substring(0, simplifiedPath.indexOf(S3_PATH_SEP));
@@ -188,7 +192,7 @@ public class S3Wrapper {
 		}
 		log.info("File downloaded successfully from " + s3Path + " to " + localDir);
 	}
-	
+
 	public void shutDown() {
 		tx.shutdownNow();
 	}
@@ -196,26 +200,26 @@ public class S3Wrapper {
 	public void deleteDir(String s3DirPath) {
 		log.info("Deleting directory " + s3DirPath);
 		List<S3File> files = getListOfObjects(s3DirPath);
-		
+
 		if (files == null || files.size() == 0) {
 			log.info("Directory " + s3DirPath + " not found. Hence nothing to delete.");
 			return;
 		}
-		
+
 		List<KeyVersion> keys = new ArrayList<KeyVersion>(60);
 		for (S3File file: files) {
 			keys.add(new KeyVersion(file.getFileName()));
 		}
-		
+
 		String simplifiedPath = (s3DirPath.replace(S3_URL, ""));
 		String bucketName = simplifiedPath.substring(0, simplifiedPath.indexOf(S3_PATH_SEP));
 		DeleteObjectsRequest multiObjectDeleteRequest = new DeleteObjectsRequest(bucketName);
 		multiObjectDeleteRequest.setKeys(keys);
 
 		try {
-		    DeleteObjectsResult delObjRes = s3client.deleteObjects(multiObjectDeleteRequest);
-		    log.info(String.format("Successfully deleted all the %s items",delObjRes.getDeletedObjects().size()));
-		    			
+			DeleteObjectsResult delObjRes = s3client.deleteObjects(multiObjectDeleteRequest);
+			log.info(String.format("Successfully deleted all the %s items",delObjRes.getDeletedObjects().size()));
+
 		} catch (MultiObjectDeleteException e) {
 			log.severe(String.format("%s", e.getMessage()));
 			log.severe(String.format("No. of objects successfully deleted = %s", e.getDeletedObjects().size()));
@@ -223,7 +227,7 @@ public class S3Wrapper {
 			log.severe(String.format("Printing error data..."));
 			for (DeleteError deleteError : e.getErrors()){
 				log.severe(String.format("Object Key: %s\t%s\t%s", 
-			            deleteError.getKey(), deleteError.getCode(), deleteError.getMessage()));
+						deleteError.getKey(), deleteError.getCode(), deleteError.getMessage()));
 			} 
 		}
 	}

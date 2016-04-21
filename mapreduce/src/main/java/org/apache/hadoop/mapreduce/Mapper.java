@@ -94,7 +94,7 @@ public class Mapper<KEYIN, VALUEIN, KEYOUT, VALUEOUT> {
 		}
 
 		private void closeAllFileWriter() {
-			log.info("Closing all the BufferedWriter " + keyToFile.size());
+			log.fine("Closing all the BufferedWriter " + keyToFile.size());
 			for(String key: keyToFile.keySet()) {
 				BufferedWriter bw = keyToFile.get(key);
 				try {
