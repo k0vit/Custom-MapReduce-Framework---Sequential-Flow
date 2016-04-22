@@ -171,8 +171,10 @@ class SlaveJob implements Runnable {
 		cleanup(true);
 
 		for(MapTask task: maptasks) {
-			log.info("Handlig map task " + task.toString());
-			processFiles(task);
+			log.info("Handling map task " + task.toString());
+			if (task.filesToProcess.size() != 0) {
+				processFiles(task);
+			}
 			totalTasksFileCount = 0;
 			currentTasksFileCount = 0;
 		}
@@ -481,7 +483,7 @@ class SlaveJob implements Runnable {
 	private ObjectIterable getIterableValue(String keyDirPath, String key) {
 		log.info("Creating iterator for key " + key + " by reading all the file records from " + keyDirPath);
 		File[] files  = new File(System.getProperty("user.dir") + File.separator + keyDirPath).listFiles();
-		log.info("There are " + files.length + " associated with key " + key);
+		log.info("There are " + files.length + " files associated with key " + key);
 		return new ObjectIterable(jobConfiguration.getProperty(MAP_OUTPUT_VALUE_CLASS), files, key);
 	}
 
