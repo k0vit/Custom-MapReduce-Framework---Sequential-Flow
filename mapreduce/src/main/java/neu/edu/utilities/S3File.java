@@ -1,5 +1,11 @@
 package neu.edu.utilities;
 
+/**
+ * Represents an object in  s3
+ * 
+ * @author kovit
+ *
+ */
 public class S3File implements Comparable<S3File>{
 	
 	private String file;

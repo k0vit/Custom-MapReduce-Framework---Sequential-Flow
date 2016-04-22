@@ -262,19 +262,24 @@ class SlaveJob implements Runnable {
 	 */
 	@SuppressWarnings("rawtypes")
 	private void processFiles(MapTask task) {
-		Utilities.createDirs(IP_OF_MAP, OP_OF_MAP);
-		Mapper<?,?,?,?> mapper = instantiateMapper(task.mapperClassName);
-		Context context = mapper.new Context();
-		callMapMthd(mapper, context, task.mapperClassName, SETUP);
-		totalTasksFileCount = task.filesToProcess.size();
-		for (String file: task.filesToProcess) {
-			log.info("Processing file " + ++currentTasksFileCount + " out of " + totalTasksFileCount);
-			String localFilePath = downloadFile(file, task.inputPath);
-			processFile(localFilePath, mapper, context, task.mapperClassName);
-			context.close();
-			new File(localFilePath).delete();
+		try {
+			Utilities.createDirs(IP_OF_MAP, OP_OF_MAP);
+			Mapper<?,?,?,?> mapper = instantiateMapper(task.mapperClassName);
+			Context context = mapper.new Context();
+			callMapMthd(mapper, context, task.mapperClassName, SETUP);
+			totalTasksFileCount = task.filesToProcess.size();
+			for (String file: task.filesToProcess) {
+				log.info("Processing file " + ++currentTasksFileCount + " out of " + totalTasksFileCount);
+				String localFilePath = downloadFile(file, task.inputPath);
+				processFile(localFilePath, mapper, context, task.mapperClassName);
+				context.close();
+				new File(localFilePath).delete();
+			}
+			callMapMthd(mapper, context, task.mapperClassName, CLEANUP);
 		}
-		callMapMthd(mapper, context, task.mapperClassName, CLEANUP);
+		catch (Exception e) {
+			Utilities.printStackTrace(e);
+		}
 	}
 
 	@SuppressWarnings("rawtypes")
@@ -354,13 +359,18 @@ class SlaveJob implements Runnable {
 
 	private void reduce() {
 		log.info("Starting reduce task");
-		readKeys();
-		processKeys();
-		log.info("All keys processed. Signalling end of reducer phase");
-		if (masterIp == null) {
-			masterIp = Utilities.getMasterIp(Utilities.readInstanceDetails());
+		try {
+			readKeys();
+			processKeys();
+			log.info("All keys processed. Signalling end of reducer phase");
+			if (masterIp == null) {
+				masterIp = Utilities.getMasterIp(Utilities.readInstanceDetails());
+			}
+			NodeCommWrapper.sendData(masterIp, EOR_URL);
 		}
-		NodeCommWrapper.sendData(masterIp, EOR_URL);
+		catch (Exception e) {
+			Utilities.printStackTrace(e);
+		}
 	}
 
 	private void readKeys() {
@@ -528,6 +538,9 @@ class SlaveJob implements Runnable {
 		s3wrapper.shutDown();
 		maptasks.clear();
 		keysToProcess = null;
+		startMap = false;
+		currentMapTasksCount.set(0);
+		totalMapTasksCount = 0;
 	}
 
 	private void cleanup(boolean isStartup) {

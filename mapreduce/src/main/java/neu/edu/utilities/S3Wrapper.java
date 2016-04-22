@@ -27,6 +27,9 @@ import com.amazonaws.services.s3.transfer.Upload;
 /**
  * Create a wrapper class to access S3 functions.
  * 
+ * @author kovit nisar
+ * @author naineel shah
+ * 
  */
 public class S3Wrapper {
 	private static final Logger log = Logger.getLogger(S3Wrapper.class.getName());
@@ -39,6 +42,12 @@ public class S3Wrapper {
 		tx = new TransferManager(s3client);
 	}
 
+	/**
+	 * @param s3InputPath
+	 * 
+	 * @return
+	 * 		list of objects in that s3InputPath
+	 */
 	public List<S3File> getListOfObjects(String s3InputPath) {
 		log.info("Getting list of objects from " + s3InputPath);
 		String simplifiedPath = removeS3(s3InputPath);
@@ -49,11 +58,7 @@ public class S3Wrapper {
 	}
 
 	/**
-	 * List objects of the given path.
-	 * 
-	 * @param bucketName
-	 * @param prefix
-	 * @return
+	 * List s3 objects in the specified bucketname and prefix
 	 */
 	public List<S3File> getListOfObjects(String bucketName, String prefix) {
 		log.info(String.format("Requesting object listing for s3://%s/%s", bucketName, prefix));
@@ -79,11 +84,7 @@ public class S3Wrapper {
 	}
 
 	/**
-	 * 
-	 * @param s3FileFullPath
-	 * @param cred
-	 * @param localFilePath
-	 * @return
+	 *	Downloads the file and stores it in the local dir specified at localFilePath 
 	 */
 	public String readOutputFromS3(String s3FileFullPath, String localFilePath) {
 		String simplifiedPath = (s3FileFullPath.replace(S3_URL, ""));
@@ -148,7 +149,7 @@ public class S3Wrapper {
 	 * @return
 	 */
 	public String downloadAndStoreFileInLocal(String inputDirS3Path, String fileString) {
-		String s3FullPath = inputDirS3Path + "/" + fileString;
+		String s3FullPath = inputDirS3Path + S3_PATH_SEP + fileString;
 		log.info(String.format("Downloading from s3 full path: %s to local dir %s", s3FullPath, fileString));
 		readOutputFromS3(s3FullPath, fileString);
 		return fileString;
@@ -179,6 +180,12 @@ public class S3Wrapper {
 		return true;
 	}
 
+	/**
+	 * Downloads the entire dir
+	 * 
+	 * @param s3Path
+	 * @param localDir
+	 */
 	public void downloadDir(String s3Path, String localDir) {
 		String simplifiedPath = (s3Path.replace(S3_URL, ""));
 		String bucketName = simplifiedPath.substring(0, simplifiedPath.indexOf(S3_PATH_SEP));
@@ -197,6 +204,10 @@ public class S3Wrapper {
 		tx.shutdownNow();
 	}
 
+	/**
+	 * Deletes the entire directory
+	 * @param s3DirPath
+	 */
 	public void deleteDir(String s3DirPath) {
 		log.info("Deleting directory " + s3DirPath);
 		List<S3File> files = getListOfObjects(s3DirPath);
@@ -221,6 +232,11 @@ public class S3Wrapper {
 		deleteObjects(keys, bucketName);
 	}
 
+	/**
+	 * Deletes multiple object in s3
+	 * @param keys
+	 * @param bucketName
+	 */
 	private void deleteObjects(List<KeyVersion> keys, String bucketName) {
 		DeleteObjectsRequest multiObjectDeleteRequest = new DeleteObjectsRequest(bucketName);
 		multiObjectDeleteRequest.setKeys(keys);
