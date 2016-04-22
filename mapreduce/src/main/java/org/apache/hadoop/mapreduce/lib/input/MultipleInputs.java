@@ -12,7 +12,12 @@ public class MultipleInputs {
 	public static void addInputPath(Job job, Path inputPath, Class<?> inputFormatClass, Class<?> mapperClass) {
 		String inputVal = inputPath.get() + MULTIPLE_INPUT_INTERNAL_SEP + mapperClass.getName() + MULTIPLE_INPUT_SEP;
 		String value = job.getConfiguration().get(MULTIPLE_INPUT);
-		value = value + inputVal;
+		if (value == null) {
+			value = inputVal;	
+		}
+		else {
+			value = value + inputVal;
+		}
 		job.set(MULTIPLE_INPUT, value);
 	}
 }

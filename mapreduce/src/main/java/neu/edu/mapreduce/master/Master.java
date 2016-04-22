@@ -191,6 +191,7 @@ public class Master {
 		int taskCount = 0;
 		String multipleInput = job.getConfiguration().get(MULTIPLE_INPUT);
 		if (multipleInput != null) {
+			log.info("Multiple input found");
 			String[] inputs = multipleInput.split(MULTIPLE_INPUT_SEP);
 			for (String input: inputs) {
 				String[] inputArgs = input.split(MULTIPLE_INPUT_INTERNAL_SEP);
@@ -199,6 +200,7 @@ public class Master {
 			}
 		}
 		else {
+			log.info("Only single input found");
 			singleInputHandler(job.getConfiguration().get(INPUT_PATH), job.getConfiguration().get(MAPPER_CLASS));
 			taskCount++;
 		}
