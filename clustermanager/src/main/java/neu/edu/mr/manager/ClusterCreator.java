@@ -55,7 +55,7 @@ public class ClusterCreator {
 			createSecurityGroup();
 
 			EbsBlockDevice device = new EbsBlockDevice().withDeleteOnTermination(true)
-					.withVolumeSize(30).withVolumeType(VolumeType.Standard);
+					.withVolumeSize(8).withVolumeType(VolumeType.Standard);
 			
 			BlockDeviceMapping m = new BlockDeviceMapping();
 			m.setEbs(device);
@@ -79,7 +79,7 @@ public class ClusterCreator {
 			
 			//attachVolume(result.getReservation().getReservationId());
 
-			amazonEC2Client.shutdown();
+			//amazonEC2Client.shutdown();
 
 			return true;
 		}
