@@ -14,7 +14,6 @@ import com.amazonaws.regions.Regions;
 import com.amazonaws.services.ec2.AmazonEC2Client;
 import com.amazonaws.services.ec2.model.AttachVolumeRequest;
 import com.amazonaws.services.ec2.model.AuthorizeSecurityGroupIngressRequest;
-import com.amazonaws.services.ec2.model.BlockDeviceMapping;
 import com.amazonaws.services.ec2.model.CreateKeyPairRequest;
 import com.amazonaws.services.ec2.model.CreateKeyPairResult;
 import com.amazonaws.services.ec2.model.CreateSecurityGroupRequest;
@@ -22,7 +21,6 @@ import com.amazonaws.services.ec2.model.CreateVolumeRequest;
 import com.amazonaws.services.ec2.model.CreateVolumeResult;
 import com.amazonaws.services.ec2.model.DescribeInstancesRequest;
 import com.amazonaws.services.ec2.model.DescribeInstancesResult;
-import com.amazonaws.services.ec2.model.EbsBlockDevice;
 import com.amazonaws.services.ec2.model.Instance;
 import com.amazonaws.services.ec2.model.InstanceStateName;
 import com.amazonaws.services.ec2.model.IpPermission;
@@ -30,7 +28,6 @@ import com.amazonaws.services.ec2.model.KeyPair;
 import com.amazonaws.services.ec2.model.Reservation;
 import com.amazonaws.services.ec2.model.RunInstancesRequest;
 import com.amazonaws.services.ec2.model.RunInstancesResult;
-import com.amazonaws.services.ec2.model.VolumeType;
 
 /**
  * Creates ec2-isntances readign cluster.properties
@@ -54,12 +51,12 @@ public class ClusterCreator {
 			createKey();
 			createSecurityGroup();
 
-			EbsBlockDevice device = new EbsBlockDevice().withDeleteOnTermination(true)
+			/*EbsBlockDevice device = new EbsBlockDevice().withDeleteOnTermination(true)
 					.withVolumeSize(8).withVolumeType(VolumeType.Standard);
 			
 			BlockDeviceMapping m = new BlockDeviceMapping();
 			m.setEbs(device);
-			m.setDeviceName("/dev/sda1");
+			m.setDeviceName("/dev/sda1");*/
 			
 			// code to create cluster instances
 			RunInstancesRequest runInstancesRequest = new RunInstancesRequest();
@@ -68,7 +65,6 @@ public class ClusterCreator {
 			.withMinCount(1)
 			.withMaxCount(params.getNoOfInstance() + 1) // +1 for master
 			.withKeyName(Main.keyName)
-			.withBlockDeviceMappings(m)
 			.withSecurityGroups(Main.securityGrpName);
 
 			LOGGER.log(Level.FINE, "Creating instance with parameters " + 
