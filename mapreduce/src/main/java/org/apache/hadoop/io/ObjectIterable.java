@@ -23,7 +23,7 @@ public class ObjectIterable <T extends Writable> implements Iterable<T> , Iterat
 	private String key;
 
 	public ObjectIterable(String className, File[] files, String key) {
-		log.info("Initializing ObjectIterable with class " + className + " and file name as " + files);
+		log.info("Initializing ObjectIterable with class " + className + " and files with size as " + files.length);
 		instantiateData(className);
 		this.key = key;
 		keyFiles = files;
