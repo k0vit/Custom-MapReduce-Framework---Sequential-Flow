@@ -16,6 +16,9 @@ public class IntWritable implements Writable{
 		this.value =  Integer.parseInt(value);
 	}
 	
+	public IntWritable() {
+	}
+
 	public int get() {
 		return this.value;
 	}
@@ -38,5 +41,9 @@ public class IntWritable implements Writable{
 	@Override
 	public void readFields(DataInput in) throws IOException {
 		this.value = in.readInt();
+	}
+
+	public void set(int value) {
+		this.value = value;
 	}
 }

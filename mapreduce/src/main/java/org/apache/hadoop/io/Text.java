@@ -16,6 +16,9 @@ public class Text implements Writable{
 		this.value = key.get();
 	}
 
+	public Text() {
+	}
+
 	@Override
 	public String toString() {
 		return value;
@@ -33,5 +36,9 @@ public class Text implements Writable{
 	@Override
 	public void readFields(DataInput in) throws IOException {
 		this.value = in.readUTF();
+	}
+
+	public void set(String value) {
+		this.value = value;
 	}
 }
