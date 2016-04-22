@@ -153,6 +153,7 @@ public class Master {
 	}
 
 	private void singleInputHandler(String inputPath, String mapperClassName) {
+		log.info("SingleInputHandler called with " + inputPath + " and " + mapperClassName);
 		List<S3File> s3Files = s3wrapper.getListOfObjects(inputPath);
 		Collections.sort(s3Files);
 		Collections.reverse(s3Files);
@@ -180,7 +181,7 @@ public class Master {
 			if (!taskData.equals(NOKEY)) {
 				taskData = taskData + TASK_SPLITTER + inputPath + TASK_SPLITTER + mapperClassName;
 			}
-			NodeCommWrapper.sendData(node.getNode().getPrivateIp(), FILE_URL, node.getTaskLst());
+			NodeCommWrapper.sendData(node.getNode().getPrivateIp(), FILE_URL, taskData);
 		}
 	}
 
