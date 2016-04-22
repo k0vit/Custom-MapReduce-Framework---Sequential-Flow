@@ -222,12 +222,12 @@ public class S3Wrapper {
 		log.info("Uploading dir= " + directory + " to bucket " + bucketName);
 		MultipleFileUpload up = tx.uploadDirectory(bucketName, "", directory, true);
 		uploadHandlerLst.add(up);
-		try {
+		/*try {
 			up.waitForCompletion();
 		} catch (AmazonClientException | InterruptedException e) {
 			log.severe("Failed uploading the file " + bucketName + ". Reason " + e.getMessage());
 			return false;
-		}
+		}*/
 		log.fine("File uploaded to S3 at the path: " + bucketName);
 		return true;
 	}

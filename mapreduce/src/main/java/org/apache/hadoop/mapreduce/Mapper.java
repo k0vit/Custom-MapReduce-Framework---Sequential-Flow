@@ -63,7 +63,7 @@ public class Mapper<KEYIN, VALUEIN, KEYOUT, VALUEOUT> {
 
 		/*@Override
 		public void write(KEYOUT key, VALUEOUT value) {
-			log.fine("context write invoked with key " + key.toString() + " and value as " + value.toString());
+			slog.fine("context write invoked with key " + key.toString() + " and value as " + value.toString());
 			if (!keyToFile.containsKey(key.toString())) {
 				String filePath = System.getProperty("user.dir") + File.separator + OP_OF_MAP + File.separator
 						+ key + KEY_DIR_SUFFIX  + key + "_" +
@@ -126,7 +126,7 @@ public class Mapper<KEYIN, VALUEIN, KEYOUT, VALUEOUT> {
 			uploadDirToS3();
 			keyValueStore = new HashMap<>();
 			//s3wrapper.waitTillUploadCompletes();
-			Utilities.deleteFolder(new File(OP_OF_MAP));
+			//Utilities.deleteFolder(new File(OP_OF_MAP));
 		}	
 
 		private void uploadDirToS3() {
