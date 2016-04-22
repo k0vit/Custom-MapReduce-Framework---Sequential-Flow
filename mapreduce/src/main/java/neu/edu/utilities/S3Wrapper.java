@@ -35,7 +35,7 @@ public class S3Wrapper {
 
 	private AmazonS3 s3client;
 	private TransferManager tx;
-	private List<Upload> uploadHandlerLst = new LinkedList<>();
+	private List<MultipleFileUpload> uploadHandlerLst = new LinkedList<>();
 
 	public S3Wrapper(AmazonS3 s3client) {
 		this.s3client = s3client;
@@ -186,7 +186,7 @@ public class S3Wrapper {
 			log.fine("File uploaded to S3 at the path: " + outputS3FullPath);
 		}
 		else {
-			uploadHandlerLst.add(up);
+			//uploadHandlerLst.add(up);
 		}
 		return true;
 	}
@@ -194,7 +194,7 @@ public class S3Wrapper {
 	public void waitTillUploadCompletes() {
 		log.info("Number of uploads pending = " + uploadHandlerLst.size());
 		if (uploadHandlerLst.size() > 0) {
-			for (Upload up: uploadHandlerLst) {
+			for (MultipleFileUpload up: uploadHandlerLst) {
 				if (up != null && !up.isDone()) {
 					try {
 						up.waitForCompletion();
@@ -221,6 +221,7 @@ public class S3Wrapper {
 		}
 		log.info("Uploading dir= " + directory + " to bucket " + bucketName);
 		MultipleFileUpload up = tx.uploadDirectory(bucketName, "", directory, true);
+		uploadHandlerLst.add(up);
 		try {
 			up.waitForCompletion();
 		} catch (AmazonClientException | InterruptedException e) {

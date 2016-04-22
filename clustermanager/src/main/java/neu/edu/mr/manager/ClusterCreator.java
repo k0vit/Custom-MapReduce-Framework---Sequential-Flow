@@ -12,13 +12,10 @@ import com.amazonaws.AmazonServiceException;
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.ec2.AmazonEC2Client;
-import com.amazonaws.services.ec2.model.AttachVolumeRequest;
 import com.amazonaws.services.ec2.model.AuthorizeSecurityGroupIngressRequest;
 import com.amazonaws.services.ec2.model.CreateKeyPairRequest;
 import com.amazonaws.services.ec2.model.CreateKeyPairResult;
 import com.amazonaws.services.ec2.model.CreateSecurityGroupRequest;
-import com.amazonaws.services.ec2.model.CreateVolumeRequest;
-import com.amazonaws.services.ec2.model.CreateVolumeResult;
 import com.amazonaws.services.ec2.model.DescribeInstancesRequest;
 import com.amazonaws.services.ec2.model.DescribeInstancesResult;
 import com.amazonaws.services.ec2.model.Instance;
@@ -51,13 +48,6 @@ public class ClusterCreator {
 			createKey();
 			createSecurityGroup();
 
-			/*EbsBlockDevice device = new EbsBlockDevice().withDeleteOnTermination(true)
-					.withVolumeSize(8).withVolumeType(VolumeType.Standard);
-			
-			BlockDeviceMapping m = new BlockDeviceMapping();
-			m.setEbs(device);
-			m.setDeviceName("/dev/sda1");*/
-			
 			// code to create cluster instances
 			RunInstancesRequest runInstancesRequest = new RunInstancesRequest();
 			runInstancesRequest.withImageId(params.getBaseImageName())
@@ -73,8 +63,6 @@ public class ClusterCreator {
 			RunInstancesResult result = amazonEC2Client.runInstances(runInstancesRequest);
 			writeInstanceDetails(result.getReservation().getReservationId());
 			
-			//attachVolume(result.getReservation().getReservationId());
-
 			//amazonEC2Client.shutdown();
 
 			return true;
@@ -82,32 +70,6 @@ public class ClusterCreator {
 		catch (Exception e) {
 			System.err.println("Cluster creation failed. Reason:" + e.getMessage());
 			return false;
-		}
-	}
-
-	private void attachVolume(String reservationId) throws InterruptedException {
-		LOGGER.info("Attaching more volume");
-		for (Reservation reservation: amazonEC2Client.describeInstances().getReservations()) {
-			if (reservation.getReservationId().equals(reservationId)) {
-				for (Instance inst : reservation.getInstances()) {
-					LOGGER.info("Attaching 8 gb to instance " + inst.getInstanceId());
-					CreateVolumeRequest createVolumeRequest = new CreateVolumeRequest()
-							.withAvailabilityZone(inst.getPlacement().getAvailabilityZone())
-							.withSize(8);
-					
-
-					CreateVolumeResult createVolumeResult = amazonEC2Client.createVolume(createVolumeRequest);
-
-					AttachVolumeRequest attachRequest = new AttachVolumeRequest()
-							.withDevice("/dev/xvda")
-							.withInstanceId(inst.getInstanceId())
-							.withVolumeId(createVolumeResult.getVolume().getVolumeId());
-					
-					Thread.sleep(10000);
-
-					amazonEC2Client.attachVolume(attachRequest);
-				}
-			}
 		}
 	}
 

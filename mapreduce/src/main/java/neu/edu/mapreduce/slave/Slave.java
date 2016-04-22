@@ -165,7 +165,7 @@ class SlaveJob implements Runnable {
 		setup();
 		cleanup(true);
 		processFiles();
-		//s3wrapper.waitTillUploadCompletes();
+		s3wrapper.waitTillUploadCompletes();
 		cleanup(false);
 		
 		log.info("All files processed, signalling end of mapper phase");
