@@ -9,7 +9,11 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * action = create, terminate
+ * Takes one argument which can either be create or terminate
+ * 
+ * create to create the cluster
+ * terminate to terminate the cluster
+ * 
  * @author kovit
  *
  */

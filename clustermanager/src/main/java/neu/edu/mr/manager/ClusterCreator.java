@@ -27,7 +27,8 @@ import com.amazonaws.services.ec2.model.RunInstancesRequest;
 import com.amazonaws.services.ec2.model.RunInstancesResult;
 
 /**
- * Creates ec2-isntances readign cluster.properties
+ * Creates ec2-isntances with the parameters specified in the cluster.properties
+ * 
  * @author kovit
  *
  */
@@ -73,7 +74,7 @@ public class ClusterCreator {
 		}
 	}
 
-	// writes instance details to file, like private and public ip.
+	// writes instance details to file i.e. instance-id, private, public ip and M/S (where M is master and S is slave)
 	// Check InstnaceDetails.csv
 	private void writeInstanceDetails(String reservationId) {
 		try {
@@ -128,6 +129,11 @@ public class ClusterCreator {
 		}
 	}
 
+	/**
+	 * creating key.
+	 * 
+	 * Private key is stored in the current directory under ec2pem.key
+	 */
 	private void createKey() {
 		CreateKeyPairRequest createKeyPairRequest = new CreateKeyPairRequest();
 		createKeyPairRequest.withKeyName(Main.keyName);
@@ -155,6 +161,9 @@ public class ClusterCreator {
 		}
 	}
 
+	/**
+	 * Create security groups
+	 */
 	private void createSecurityGroup() {
 		try {
 			CreateSecurityGroupRequest csgr = new CreateSecurityGroupRequest();
@@ -173,7 +182,7 @@ public class ClusterCreator {
 		}
 	}
 
-	// TODO: check if security grp can be made more secure
+	// security permission
 	private List<IpPermission> getIpPermissions() {
 		List<IpPermission> permissions = new ArrayList<IpPermission>();
 
