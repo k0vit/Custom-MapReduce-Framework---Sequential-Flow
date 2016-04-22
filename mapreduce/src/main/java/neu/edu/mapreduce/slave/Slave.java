@@ -218,7 +218,7 @@ class SlaveJob implements Runnable {
 			}
 		}
 
-		log.info("All Map tasks received " + currentTasksFileCount);
+		log.info("All Map tasks received " + currentMapTasksCount.get());
 		//stop();
 	}
 
