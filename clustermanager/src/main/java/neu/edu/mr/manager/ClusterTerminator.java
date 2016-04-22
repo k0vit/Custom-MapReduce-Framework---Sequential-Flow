@@ -19,6 +19,7 @@ import com.amazonaws.services.ec2.model.TerminateInstancesRequest;
 
 /**
  * terminates the cluster instances, delete the key and security grp
+ * 
  * @author kovit
  *
  */
@@ -72,6 +73,10 @@ public class ClusterTerminator {
 		}
 	}
 
+	/**
+	 * Gets the instance ids from the instancedetails.csv
+	 * @return
+	 */
 	private List<String> getTerminateInstanceIds() {
 		List<String> instanceIds = new ArrayList<>();
 		try {

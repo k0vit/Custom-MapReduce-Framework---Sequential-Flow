@@ -19,7 +19,6 @@ import static org.apache.hadoop.Constants.FileConfig.OP_OF_REDUCE;
 import static org.apache.hadoop.Constants.FileConfig.S3_PATH_SEP;
 import static org.apache.hadoop.Constants.FileConfig.TASK_SPLITTER;
 import static org.apache.hadoop.Constants.JobConf.JOB_NAME;
-import static org.apache.hadoop.Constants.JobConf.MAPPER_CLASS;
 import static org.apache.hadoop.Constants.JobConf.MAP_OUTPUT_KEY_CLASS;
 import static org.apache.hadoop.Constants.JobConf.MAP_OUTPUT_VALUE_CLASS;
 import static org.apache.hadoop.Constants.JobConf.REDUCER_CLASS;
@@ -282,11 +281,11 @@ class SlaveJob implements Runnable {
 	private void callMapMthd(Mapper<?, ?, ?, ?> mapper, Mapper.Context context, String mapperClassName, String methdName) {
 		try {
 			java.lang.reflect.Method mthd = getMapreduceClass(mapperClassName)
-					.getDeclaredMethod(CLEANUP, Mapper.Context.class);
+					.getDeclaredMethod(methdName, Mapper.Context.class);
 			mthd.setAccessible(true);
 			mthd.invoke(mapper, context);
 		} catch (Exception e) {
-			log.warning("Failed to invoke setup method on mapper class " + mapper 
+			log.warning("Failed to invoke " + methdName + " on mapper class " + mapper 
 					+ ". Reason " + e.getMessage());
 			log.warning("Stacktrace " + Utilities.printStackTrace(e));
 		}
@@ -325,7 +324,7 @@ class SlaveJob implements Runnable {
 			ctor.setAccessible(true);
 			mapper = (Mapper<?, ?, ?, ?>) ctor.newInstance();
 			if (mapper != null) {
-				log.info("Mapper instantiated successfully " + jobConfiguration.getProperty(MAPPER_CLASS));
+				log.info("Mapper instantiated successfully " + mapperClassName);
 			}
 		} catch (Exception e) {
 			log.severe("Failed to create an instance of mapper class. Reason " + e.getMessage());
