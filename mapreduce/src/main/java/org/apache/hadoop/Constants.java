@@ -1,5 +1,8 @@
 package org.apache.hadoop;
 
+/**
+ * @author kovit
+ */
 public class Constants {
 	public static class JobConf {
 		public static final String JOB_NAME = "JobName";

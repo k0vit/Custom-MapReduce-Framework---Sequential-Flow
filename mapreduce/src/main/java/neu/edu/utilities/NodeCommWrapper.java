@@ -8,9 +8,13 @@ import java.util.logging.Logger;
 import com.mashape.unirest.http.HttpResponse;
 import com.mashape.unirest.http.Unirest;
 import com.mashape.unirest.http.exceptions.UnirestException;
+
 /**
- * Send the given data to the given ipAddress:portNo.
+ * Sends data to the specified ip, on specfied port and url with specified data as post body
  * 
+ * @author Naineel Shah
+ * @author Dipti Samant
+ * @maintainer kovit nisar
  */
 public class NodeCommWrapper {
 
@@ -26,7 +30,6 @@ public class NodeCommWrapper {
 		String address = "http://" + nodeIp + ":" + port + requestUrl;
 		log.info(String.format("Posting %s to %s", data, address));
 		try {
-			//Unirest.setTimeouts(10000, 120000);
 			HttpResponse<String> resp = Unirest.post(address).body(data).asString();
 			log.info("Response recieved with body as " + resp.getBody() + " with status as " + resp.getStatus());
 		} catch (UnirestException e) {

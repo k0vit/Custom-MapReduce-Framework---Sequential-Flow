@@ -24,12 +24,23 @@ import java.util.Random;
 import java.util.logging.Logger;
 
 import neu.edu.mapreduce.common.Node;
+
+/**
+ * Utiltiy classes
+ * 
+ * @author kovit
+ *
+ */
 public class Utilities {
 
 	private static final Logger log = Logger.getLogger(Utilities.class.getName());
 
 	private Utilities() {};
 
+	/**
+	 * @return
+	 * 		list of Node i.e ec2 instance details
+	 */
 	public static List<Node> readInstanceDetails() {
 		List<Node> nodeLst = new ArrayList<>(10);
 		try { 
@@ -51,10 +62,20 @@ public class Utilities {
 		return nodeLst;
 	}
 
+	/**
+	 * @return
+	 * 		reads cluster.properties
+	 */
 	public static Properties readClusterProperties() {
 		return readPropertyFile(CLUSTER_PROP_FILE_NAME);
 	}
 
+	/**
+	 * @param localFilePath
+	 * 			property file path 
+	 * @return
+	 * 		reads the file and converts into property
+	 */
 	public static Properties readPropertyFile(String localFilePath) {
 		log.info("Reading property file from " + localFilePath);
 		Properties prop = new Properties();
@@ -71,6 +92,12 @@ public class Utilities {
 		return prop;
 	}
 
+	/**
+	 * @param map
+	 * 		any hash map
+	 * @return
+	 * 		Sorted linked hashmap (descending order)
+	 */
 	public static <K, V extends Comparable<? super V>> Map<K, V> 
 	sortByValue(Map<K, V> map) {
 		List<Map.Entry<K, V>> list = new LinkedList<Map.Entry<K, V>>(map.entrySet());
@@ -87,6 +114,14 @@ public class Utilities {
 		return result;
 	}
 
+	/**
+	 * Gets the node slave private ip address
+	 * 
+	 * @param nodes
+	 * 		list of nodes
+	 * @return
+	 * 		private ip address
+	 */
 	public static String getSlaveId(List<Node> nodes) {
 		String ip = null;
 		try {
@@ -104,6 +139,10 @@ public class Utilities {
 		return String.valueOf(new Random().nextInt(100));
 	}
 
+	/**
+	 * Deletes the folder along with sub directories
+	 * @param folder
+	 */
 	public static void deleteFolder(File folder) {
 		log.info("Deleting folder " + folder.getAbsolutePath());
 		if (folder.exists() && folder.isDirectory()) {
@@ -122,18 +161,34 @@ public class Utilities {
 		log.info("Folder deleted ? " + !folder.exists());
 	}
 
+	/**
+	 * Creates directories
+	 * @param inputDir
+	 * @param outputDir
+	 */
 	public static void createDirs(String inputDir, String outputDir) {
 		log.info("Creating directory " + inputDir + " and " + outputDir);
 		new File(inputDir).mkdirs();
 		new File(outputDir).mkdirs();
 	}
 
+	/**
+	 * Prints stacktrace for debugging
+	 * @param e
+	 * 		exception
+	 * @return
+	 */
 	public static String printStackTrace(Exception e) {
 		StringWriter errors = new StringWriter();
 		e.printStackTrace(new PrintWriter(errors));
 		return errors.toString();
 	}
 
+	/**
+	 * Gets the master ip
+	 * @param nodes
+	 * @return
+	 */
 	public static String getMasterIp(List<Node> nodes) {
 		for (Node node: nodes) {
 			if (!node.isSlave()) {
@@ -141,7 +196,7 @@ public class Utilities {
 				return node.getPrivateIp();
 			}
 		}
-		
+
 		return null;
 	}
 }

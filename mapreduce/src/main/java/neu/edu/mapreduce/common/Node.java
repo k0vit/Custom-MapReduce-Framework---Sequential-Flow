@@ -1,5 +1,11 @@
 package neu.edu.mapreduce.common;
 
+/**
+ * Information about the cluster ec2 instances
+ * 
+ * @author kovit
+ *
+ */
 public class Node {
 
 	private String privateIp;
