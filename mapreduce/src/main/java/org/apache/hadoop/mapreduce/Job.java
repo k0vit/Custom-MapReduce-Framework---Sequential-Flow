@@ -7,6 +7,7 @@ import static org.apache.hadoop.Constants.JobConf.MAPPER_INPUT_KEY_CLASS;
 import static org.apache.hadoop.Constants.JobConf.MAPPER_INPUT_VALUE_CLASS;
 import static org.apache.hadoop.Constants.JobConf.MAP_OUTPUT_KEY_CLASS;
 import static org.apache.hadoop.Constants.JobConf.MAP_OUTPUT_VALUE_CLASS;
+import static org.apache.hadoop.Constants.JobConf.NUM_REDUCER;
 import static org.apache.hadoop.Constants.JobConf.OUTPUT_KEY_CLASS;
 import static org.apache.hadoop.Constants.JobConf.OUTPUT_VALUE_CLASS;
 import static org.apache.hadoop.Constants.JobConf.REDUCER_CLASS;
@@ -80,5 +81,9 @@ public class Job {
 
 	public String getJobName() {
 		return conf.get(JOB_NAME);
+	}
+
+	public void setNumReduceTasks(int i) {
+		conf.set(NUM_REDUCER, String.valueOf(i));
 	}
 }

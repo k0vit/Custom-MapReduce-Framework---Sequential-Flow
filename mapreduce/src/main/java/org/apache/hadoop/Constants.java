@@ -16,6 +16,10 @@ public class Constants {
 		public static final String MAPPER_INPUT_VALUE_CLASS = "MapperInputValueClass";
 		public static final String REDUCER_OP_SEPARATOR = "mapreduce.output.textoutputformat.separator";
 		public static final String DEFAULT_REDUCER_OP_SEPARATOR = " ";
+		public static final String NUM_REDUCER = "NoOfReducer";
+		public static final String MULTIPLE_INPUT = "MultiInput";
+		public static final String MULTIPLE_INPUT_SEP = ";";
+		public static final String MULTIPLE_INPUT_INTERNAL_SEP = ",";
 	}
 
 	public static class FileConfig {
