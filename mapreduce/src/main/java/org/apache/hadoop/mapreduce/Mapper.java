@@ -8,9 +8,9 @@ import static org.apache.hadoop.Constants.FileConfig.KEY_DIR_SUFFIX;
 import static org.apache.hadoop.Constants.FileConfig.OP_OF_MAP;
 import static org.apache.hadoop.Constants.FileConfig.S3_PATH_SEP;
 
-import java.io.BufferedWriter;
+import java.io.DataOutputStream;
 import java.io.File;
-import java.io.FileWriter;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -18,6 +18,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 import java.util.logging.Logger;
+
+import org.apache.hadoop.io.Writable;
 
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.services.s3.AmazonS3Client;
@@ -43,7 +45,7 @@ public class Mapper<KEYIN, VALUEIN, KEYOUT, VALUEOUT> {
 	 */
 	public class Context extends BaseContext<KEYIN, VALUEIN, KEYOUT, VALUEOUT> {
 
-		Map<String, BufferedWriter> keyToFile;
+		Map<String, DataOutputStream> keyToFile;
 		private S3Wrapper s3wrapper;
 		private Properties clusterProperties;
 		private String slaveId;
@@ -73,14 +75,14 @@ public class Mapper<KEYIN, VALUEIN, KEYOUT, VALUEOUT> {
 						f.getParentFile().mkdirs();
 						f.createNewFile();
 					}
-					keyToFile.put(key.toString(), new BufferedWriter(new FileWriter(filePath, true)));
+					keyToFile.put(key.toString(), new DataOutputStream(new FileOutputStream(filePath)));
 				} catch (IOException e) {
 					log.severe("Failed to create file " + filePath + ". Reason " + e.getMessage());
 				}
 			}
 
 			try {
-				keyToFile.get(key.toString()).write(value.toString() + System.getProperty("line.separator"));
+				((Writable)value).write(keyToFile.get(key.toString()));
 			} catch (IOException e) {
 				log.severe("Failed to write " + value.toString() + " for key " + key.toString()
 				+ "Reason " + e.getMessage());
@@ -96,9 +98,9 @@ public class Mapper<KEYIN, VALUEIN, KEYOUT, VALUEOUT> {
 		private void closeAllFileWriter() {
 			log.fine("Closing all the BufferedWriter " + keyToFile.size());
 			for(String key: keyToFile.keySet()) {
-				BufferedWriter bw = keyToFile.get(key);
+				DataOutputStream dos = keyToFile.get(key);
 				try {
-					bw.close();
+					dos.close();
 				} catch (IOException e) {
 					log.severe("Failed to close buffered writer for key " + key + ". Reason " + e.getMessage());
 				}

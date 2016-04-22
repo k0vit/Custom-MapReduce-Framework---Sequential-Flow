@@ -36,7 +36,9 @@ extends TestCase
 		S3Wrapper s = new S3Wrapper(new AmazonS3Client(new BasicAWSCredentials
 				("AKIAJF77SYNJS5ZLR2TA", "t+cWGKYOOplu1ib53CIFf7XgH56brRsZd3HKsl00")));
 
+		while (true) {
 		s.deleteDir("s3://kovit2/InputOfReducer");
+		}
 	}
 
 	/*public void testFileDistr() {

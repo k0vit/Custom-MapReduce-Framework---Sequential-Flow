@@ -32,13 +32,11 @@ import static spark.Spark.post;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileReader;
 import java.io.InputStreamReader;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -46,6 +44,7 @@ import java.util.logging.Logger;
 import java.util.zip.GZIPInputStream;
 
 import org.apache.hadoop.io.LongWritable;
+import org.apache.hadoop.io.ObjectIterable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.Mapper.Context;
@@ -478,30 +477,12 @@ class SlaveJob implements Runnable {
 		}
 	}
 
-	private List<Object> getIterableValue(String keyDirPath, String key) {
-		log.fine("Creating iterator for key " + key + " by reading all the file records from " + keyDirPath);
+	@SuppressWarnings("rawtypes")
+	private ObjectIterable getIterableValue(String keyDirPath, String key) {
+		log.info("Creating iterator for key " + key + " by reading all the file records from " + keyDirPath);
 		File[] files  = new File(System.getProperty("user.dir") + File.separator + keyDirPath).listFiles();
-		log.fine("There are " + files.length + " associated with key " + key);
-		List<Object> values = new LinkedList<>();
-		Class<?> VALUEIN = getReducerInputClass(jobConfiguration.getProperty(MAP_OUTPUT_VALUE_CLASS));
-		for (File file : files) {
-			log.fine("Fetching all records from file " + file.getAbsolutePath());
-			if (file.getName().startsWith(key)) {
-				try (BufferedReader br = new BufferedReader(new FileReader(file))){
-					String line = null;
-					while((line = br.readLine()) != null) {
-						values.add(VALUEIN.getConstructor(String.class).newInstance(line));
-					}
-				}
-				catch(Exception e) {
-					log.severe("Failed to create iterable for key " + key 
-							+ ". Reason " + e.getMessage());
-					log.severe("Stacktrace " + Utilities.printStackTrace(e));
-				}
-			}
-		}
-		log.fine("Iterable for key " + key + " has values " + values);
-		return values;
+		log.info("There are " + files.length + " associated with key " + key);
+		return new ObjectIterable(jobConfiguration.getProperty(MAP_OUTPUT_VALUE_CLASS), files, key);
 	}
 
 	private void tearDown() {

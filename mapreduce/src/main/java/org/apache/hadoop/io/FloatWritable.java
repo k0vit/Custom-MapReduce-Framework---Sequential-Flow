@@ -1,6 +1,10 @@
 package org.apache.hadoop.io;
 
-public class FloatWritable {
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
+
+public class FloatWritable implements Writable{
 
 	private float value;
 	
@@ -19,5 +23,15 @@ public class FloatWritable {
 	@Override
 	public String toString() {
 		return String.valueOf(value);
+	}
+	
+	@Override
+	public void write(DataOutput out) throws IOException {
+		out.writeFloat(value);
+	}
+
+	@Override
+	public void readFields(DataInput in) throws IOException {
+		this.value = in.readFloat();
 	}
 }

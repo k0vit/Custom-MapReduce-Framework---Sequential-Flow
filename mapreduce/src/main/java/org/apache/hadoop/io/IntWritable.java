@@ -1,6 +1,10 @@
 package org.apache.hadoop.io;
 
-public class IntWritable {
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
+
+public class IntWritable implements Writable{
 
 	private int value;
 	
@@ -24,5 +28,15 @@ public class IntWritable {
 	@Override
 	public String toString() {
 		return String.valueOf(value);
+	}
+	
+	@Override
+	public void write(DataOutput out) throws IOException {
+		out.writeInt(value);;
+	}
+
+	@Override
+	public void readFields(DataInput in) throws IOException {
+		this.value = in.readInt();
 	}
 }

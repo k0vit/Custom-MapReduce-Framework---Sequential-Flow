@@ -69,6 +69,11 @@ public class S3Wrapper {
 		while (listing.isTruncated()) {
 			listing = s3client.listNextBatchOfObjects(listing);
 			summaries.addAll(listing.getObjectSummaries());
+			
+			// TODO remove this
+			if (summaries.size() >= 90000) {
+				break;
+			}
 		}
 
 		for (S3ObjectSummary summary : summaries) {

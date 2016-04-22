@@ -1,6 +1,10 @@
 package org.apache.hadoop.io;
 
-public class BooleanWritable {
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
+
+public class BooleanWritable implements Writable {
 
 	private boolean value;
 	
@@ -19,5 +23,15 @@ public class BooleanWritable {
 	@Override
 	public String toString() {
 		return String.valueOf(value);
+	}
+
+	@Override
+	public void write(DataOutput out) throws IOException {
+		out.writeBoolean(value);
+	}
+
+	@Override
+	public void readFields(DataInput in) throws IOException {
+		this.value = in.readBoolean();
 	}
 }

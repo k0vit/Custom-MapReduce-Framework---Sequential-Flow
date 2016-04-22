@@ -1,6 +1,10 @@
 package org.apache.hadoop.io;
 
-public class Text {
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
+
+public class Text implements Writable{
 
 	private String value;
 	
@@ -19,5 +23,15 @@ public class Text {
 	
 	public String get() {
 		return value;
+	}
+	
+	@Override
+	public void write(DataOutput out) throws IOException {
+		out.writeUTF(value);;
+	}
+
+	@Override
+	public void readFields(DataInput in) throws IOException {
+		this.value = in.readUTF();
 	}
 }
