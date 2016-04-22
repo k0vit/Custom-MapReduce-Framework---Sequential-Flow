@@ -266,7 +266,7 @@ class SlaveJob implements Runnable {
 		for (String file: task.filesToProcess) {
 			log.info("Processing file " + ++currentTasksFileCount + " out of " + totalTasksFileCount);
 			String localFilePath = downloadFile(file, task.inputPath);
-			processFile(localFilePath, mapper, context);
+			processFile(localFilePath, mapper, context, task.mapperClassName);
 			context.close();
 			new File(localFilePath).delete();
 		}
@@ -280,14 +280,14 @@ class SlaveJob implements Runnable {
 	}
 
 	@SuppressWarnings("rawtypes")
-	private void processFile(String file, Mapper<?, ?, ?, ?> mapper, Context context) {
+	private void processFile(String file, Mapper<?, ?, ?, ?> mapper, Context context, String mapperClassName) {
 		log.info("Processing file " + file);
 		try (BufferedReader br = new BufferedReader(new InputStreamReader
 				(new GZIPInputStream(new FileInputStream(file))))){
 			String line = null;
 			long counter = 0l;
 			while((line = br.readLine()) != null) {
-				processLine(line, mapper, context, counter);
+				processLine(line, mapper, context, counter, mapperClassName);
 				counter++;
 			}   
 		}
@@ -315,14 +315,14 @@ class SlaveJob implements Runnable {
 	}
 
 	@SuppressWarnings("rawtypes")
-	private void processLine(String line, Mapper<?, ?, ?, ?> mapper, Context context, long counter) {
+	private void processLine(String line, Mapper<?, ?, ?, ?> mapper, Context context, long counter, String mapperClassName) {
 		try {
 			log.fine("Calling map with key as " + counter + " value as " + line);
 			Class<?> KEYIN = Class.forName(LongWritable.class.getName());
 			Object keyIn = KEYIN.getConstructor(Long.class).newInstance(counter);
 			Class<?> VALUEIN = Class.forName(Text.class.getName());
 			Object valueIn = VALUEIN.getConstructor(String.class).newInstance(line);
-			java.lang.reflect.Method mthd = getMapreduceClass(jobConfiguration.getProperty(MAPPER_CLASS))
+			java.lang.reflect.Method mthd = getMapreduceClass(mapperClassName)
 					.getDeclaredMethod(MAP_METHD_NAME, KEYIN, VALUEIN, Mapper.Context.class);
 			mthd.setAccessible(true);
 			mthd.invoke(mapper, keyIn, valueIn, context);
