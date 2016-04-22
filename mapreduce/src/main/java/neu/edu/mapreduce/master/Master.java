@@ -16,8 +16,13 @@ import static org.apache.hadoop.Constants.FileConfig.S3_PATH_SEP;
 import static org.apache.hadoop.Constants.FileConfig.TASK_SPLITTER;
 import static org.apache.hadoop.Constants.JobConf.INPUT_PATH;
 import static org.apache.hadoop.Constants.JobConf.JOB_NAME;
+import static org.apache.hadoop.Constants.JobConf.MAPPER_CLASS;
+import static org.apache.hadoop.Constants.JobConf.MULTIPLE_INPUT;
+import static org.apache.hadoop.Constants.JobConf.MULTIPLE_INPUT_INTERNAL_SEP;
+import static org.apache.hadoop.Constants.JobConf.MULTIPLE_INPUT_SEP;
 import static org.apache.hadoop.Constants.JobConf.OUTPUT_PATH;
 import static org.apache.hadoop.Constants.MapReduce.NOKEY;
+import static org.apache.hadoop.Constants.MapReduce.START_MAPPER;
 import static spark.Spark.post;
 
 import java.io.PrintWriter;
@@ -108,7 +113,7 @@ public class Master {
 				(clusterProperties.getProperty("AccessKey"), clusterProperties.getProperty("SecretKey"))));
 		nodes = Utilities.readInstanceDetails();
 		readAndUploadConfiguration();
-		
+
 		String outputPath = job.getConfiguration().get(OUTPUT_PATH);
 		List<S3File> files = s3wrapper.getListOfObjects(outputPath);
 		if (files != null && files.size() > 0) {
@@ -147,11 +152,8 @@ public class Master {
 		}
 	}
 
-	/**
-	 * Step 3
-	 */
-	private void sendFilesToMapper() {
-		List<S3File> s3Files = s3wrapper.getListOfObjects(job.getConfiguration().get(INPUT_PATH));
+	private void singleInputHandler(String inputPath, String mapperClassName) {
+		List<S3File> s3Files = s3wrapper.getListOfObjects(inputPath);
 		Collections.sort(s3Files);
 		Collections.reverse(s3Files);
 
@@ -174,7 +176,37 @@ public class Master {
 		log.info(nodeToFile.toString());
 
 		for (NodeToTask node : nodeToFile) {
+			String taskData = node.getTaskLst();
+			if (!taskData.equals(NOKEY)) {
+				taskData = taskData + TASK_SPLITTER + inputPath + TASK_SPLITTER + mapperClassName;
+			}
 			NodeCommWrapper.sendData(node.getNode().getPrivateIp(), FILE_URL, node.getTaskLst());
+		}
+	}
+
+	/**
+	 * Step 3
+	 */
+	private void sendFilesToMapper() {
+		int taskCount = 0;
+		String multipleInput = job.getConfiguration().get(MULTIPLE_INPUT);
+		if (multipleInput != null) {
+			String[] inputs = multipleInput.split(MULTIPLE_INPUT_SEP);
+			for (String input: inputs) {
+				String[] inputArgs = input.split(MULTIPLE_INPUT_INTERNAL_SEP);
+				singleInputHandler(inputArgs[0], inputArgs[1]);
+				taskCount++;
+			}
+		}
+		else {
+			singleInputHandler(job.getConfiguration().get(INPUT_PATH), job.getConfiguration().get(MAPPER_CLASS));
+			taskCount++;
+		}
+
+		for (Node node : nodes) {
+			if (node.isSlave()) {
+				NodeCommWrapper.sendData(node.getPrivateIp(), FILE_URL, START_MAPPER + taskCount);
+			}
 		}
 	}
 
@@ -194,7 +226,7 @@ public class Master {
 		while (noOfMapReduceDone.get() != slaveCount) {
 			log.fine("Waiting at " + url + " from all slaves");
 		}
-		
+
 		log.info("All the " + taskType + " have ended");
 
 		noOfMapReduceDone.set(0);

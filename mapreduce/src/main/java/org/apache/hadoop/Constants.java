@@ -61,5 +61,6 @@ public class Constants {
 		public static final String MAP_METHD_NAME = "map";
 		public static final String REDUCE_METHD_NAME = "reduce";
 		public static final String NOKEY = "NOKEY";
+		public static final String START_MAPPER = "StartMap_";
 	}
 }
