@@ -5,7 +5,6 @@ import static org.apache.hadoop.Constants.FileConfig.S3_URL;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.logging.Logger;
 
@@ -22,7 +21,6 @@ import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.amazonaws.services.s3.model.S3ObjectSummary;
 import com.amazonaws.services.s3.transfer.Download;
 import com.amazonaws.services.s3.transfer.MultipleFileDownload;
-import com.amazonaws.services.s3.transfer.MultipleFileUpload;
 import com.amazonaws.services.s3.transfer.TransferManager;
 import com.amazonaws.services.s3.transfer.Upload;
 
@@ -35,7 +33,6 @@ public class S3Wrapper {
 
 	private AmazonS3 s3client;
 	private TransferManager tx;
-	private List<MultipleFileUpload> uploadHandlerLst = new LinkedList<>();
 
 	public S3Wrapper(AmazonS3 s3client) {
 		this.s3client = s3client;
@@ -157,10 +154,6 @@ public class S3Wrapper {
 		return fileString;
 	}
 
-	public boolean uploadFileS3(String outputS3FullPath, File file) {
-		return uploadFileS3(outputS3FullPath, file, true);
-	}
-
 	/**
 	 * Upload the file to S3 using Transfer Manager.
 	 * 
@@ -169,66 +162,20 @@ public class S3Wrapper {
 	 * @param instanceId
 	 * @return
 	 */
-	public boolean uploadFileS3(String outputS3FullPath, File file, boolean shouldWaitForCompletetion) {
+	public boolean uploadFileS3(String outputS3FullPath, File file) {
 		String simplifiedPath = removeS3(outputS3FullPath);
 		int index = simplifiedPath.indexOf(S3_PATH_SEP);
 		String bucketName = simplifiedPath.substring(0, index);
 		String key = simplifiedPath.substring(index + 1);
 		log.fine("Uploading file " + file.getAbsolutePath() + " to bucket " + bucketName + " with key as " + key);
 		Upload up = tx.upload(bucketName, key, file);
-		if (shouldWaitForCompletetion) {
-			try {
-				up.waitForCompletion();
-			} catch (AmazonClientException | InterruptedException e) {
-				log.severe("Failed uploading the file " + outputS3FullPath + ". Reason " + e.getMessage());
-				return false;
-			}
-			log.fine("File uploaded to S3 at the path: " + outputS3FullPath);
-		}
-		else {
-			//uploadHandlerLst.add(up);
-		}
-		return true;
-	}
-
-	public void waitTillUploadCompletes() {
-		log.info("Number of uploads pending = " + uploadHandlerLst.size());
-		if (uploadHandlerLst.size() > 0) {
-			for (MultipleFileUpload up: uploadHandlerLst) {
-				if (up != null && !up.isDone()) {
-					try {
-						up.waitForCompletion();
-					} catch (AmazonClientException | InterruptedException e) {
-						log.severe("Failed uploading the file. Reason " + e.getMessage());
-					}
-				}
-			}
-			log.info("Upload completed");
-		}
-
-		uploadHandlerLst = new ArrayList<>();
-	}
-
-	public boolean uploadFilesToS3(String s3BucketName, File directory) {
-		String simplifiedPath = removeS3(s3BucketName);
-		int index = simplifiedPath.indexOf(S3_PATH_SEP);
-		String bucketName;
-		if (index == -1) {
-			bucketName = simplifiedPath;
-		}
-		else {
-			bucketName = simplifiedPath.substring(0, index);
-		}
-		log.info("Uploading dir= " + directory + " to bucket " + bucketName);
-		MultipleFileUpload up = tx.uploadDirectory(bucketName, "", directory, true);
-		uploadHandlerLst.add(up);
-		/*try {
+		try {
 			up.waitForCompletion();
 		} catch (AmazonClientException | InterruptedException e) {
-			log.severe("Failed uploading the file " + bucketName + ". Reason " + e.getMessage());
+			log.severe("Failed uploading the file " + outputS3FullPath + ". Reason " + e.getMessage());
 			return false;
-		}*/
-		log.fine("File uploaded to S3 at the path: " + bucketName);
+		}
+		log.fine("File uploaded to S3 at the path: " + outputS3FullPath);
 		return true;
 	}
 

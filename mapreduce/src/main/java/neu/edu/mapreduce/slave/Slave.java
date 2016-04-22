@@ -165,15 +165,11 @@ class SlaveJob implements Runnable {
 		setup();
 		cleanup(true);
 		processFiles();
-		s3wrapper.waitTillUploadCompletes();
-		cleanup(false);
-		
 		log.info("All files processed, signalling end of mapper phase");
 		if (masterIp == null) {
 			masterIp = Utilities.getMasterIp(Utilities.readInstanceDetails());
 		}
 		NodeCommWrapper.sendData(masterIp, EOM_URL);
-		
 		totalTaskCount = 0;
 		currentTaskCount = 0;
 	}

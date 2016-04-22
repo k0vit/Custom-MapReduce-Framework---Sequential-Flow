@@ -62,8 +62,8 @@ public class ClusterCreator {
 					+ ", " + Main.keyName);
 			RunInstancesResult result = amazonEC2Client.runInstances(runInstancesRequest);
 			writeInstanceDetails(result.getReservation().getReservationId());
-			
-			//amazonEC2Client.shutdown();
+
+			amazonEC2Client.shutdown();
 
 			return true;
 		}
@@ -102,7 +102,7 @@ public class ClusterCreator {
 								LOGGER.log(Level.FINE, "State changed to " + state);
 							}
 						}
-
+						
 						// create InstnaceDetail.csv with all isntance details
 						StringBuilder instanceDetails = new StringBuilder();
 						instanceDetails.append(inst.getInstanceId()).append(",");
