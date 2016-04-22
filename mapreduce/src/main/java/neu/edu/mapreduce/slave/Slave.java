@@ -286,9 +286,9 @@ class SlaveJob implements Runnable {
 			mthd.setAccessible(true);
 			mthd.invoke(mapper, context);
 		} catch (Exception e) {
-			log.severe("Failed to invoke setup method on mapper class " + mapper 
+			log.warning("Failed to invoke setup method on mapper class " + mapper 
 					+ ". Reason " + e.getMessage());
-			log.severe("Stacktrace " + Utilities.printStackTrace(e));
+			log.warning("Stacktrace " + Utilities.printStackTrace(e));
 		}
 	}
 
@@ -432,9 +432,9 @@ class SlaveJob implements Runnable {
 			mthdr.invoke(reducer, context);
 		}
 		catch (Exception e) {
-			log.severe("Failed to invoke method " + methodName + " on reduce class " + reducer 
+			log.warning("Failed to invoke method " + methodName + " on reduce class " + reducer 
 					+ ". Reason " + e.getMessage());
-			log.severe("Stacktrace " + Utilities.printStackTrace(e));
+			log.warning("Stacktrace " + Utilities.printStackTrace(e));
 		}
 	}
 
