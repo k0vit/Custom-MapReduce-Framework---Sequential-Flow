@@ -23,9 +23,11 @@ import static org.apache.hadoop.Constants.JobConf.MAPPER_CLASS;
 import static org.apache.hadoop.Constants.JobConf.MAP_OUTPUT_KEY_CLASS;
 import static org.apache.hadoop.Constants.JobConf.MAP_OUTPUT_VALUE_CLASS;
 import static org.apache.hadoop.Constants.JobConf.REDUCER_CLASS;
+import static org.apache.hadoop.Constants.MapReduce.CLEANUP;
 import static org.apache.hadoop.Constants.MapReduce.MAP_METHD_NAME;
 import static org.apache.hadoop.Constants.MapReduce.NOKEY;
 import static org.apache.hadoop.Constants.MapReduce.REDUCE_METHD_NAME;
+import static org.apache.hadoop.Constants.MapReduce.SETUP;
 import static org.apache.hadoop.Constants.MapReduce.START_MAPPER;
 import static spark.Spark.post;
 
@@ -264,6 +266,7 @@ class SlaveJob implements Runnable {
 		Utilities.createDirs(IP_OF_MAP, OP_OF_MAP);
 		Mapper<?,?,?,?> mapper = instantiateMapper(task.mapperClassName);
 		Context context = mapper.new Context();
+		callMapMthd(mapper, context, task.mapperClassName, SETUP);
 		totalTasksFileCount = task.filesToProcess.size();
 		for (String file: task.filesToProcess) {
 			log.info("Processing file " + ++currentTasksFileCount + " out of " + totalTasksFileCount);
@@ -271,6 +274,21 @@ class SlaveJob implements Runnable {
 			processFile(localFilePath, mapper, context, task.mapperClassName);
 			context.close();
 			new File(localFilePath).delete();
+		}
+		callMapMthd(mapper, context, task.mapperClassName, CLEANUP);
+	}
+
+	@SuppressWarnings("rawtypes")
+	private void callMapMthd(Mapper<?, ?, ?, ?> mapper, Mapper.Context context, String mapperClassName, String methdName) {
+		try {
+			java.lang.reflect.Method mthd = getMapreduceClass(mapperClassName)
+					.getDeclaredMethod(CLEANUP, Mapper.Context.class);
+			mthd.setAccessible(true);
+			mthd.invoke(mapper, context);
+		} catch (Exception e) {
+			log.severe("Failed to invoke setup method on mapper class " + mapper 
+					+ ". Reason " + e.getMessage());
+			log.severe("Stacktrace " + Utilities.printStackTrace(e));
 		}
 	}
 
@@ -389,6 +407,7 @@ class SlaveJob implements Runnable {
 		String[] keys = keysToProcess.split(TASK_SPLITTER);
 		Reducer<?,?,?,?> reducer = getReducerInstance();
 		Reducer<?, ?, ?, ?>.Context context = reducer.new Context();
+		callReduceMethod(reducer, context, SETUP);
 		totalTasksFileCount = keys.length;
 		for (String key: keys) {
 			log.info("Processing file " + ++currentTasksFileCount + " out of " + totalTasksFileCount);
@@ -400,6 +419,23 @@ class SlaveJob implements Runnable {
 			}
 		}
 		context.close();
+		callReduceMethod(reducer, context, CLEANUP);
+	}
+
+	private void callReduceMethod(Reducer<?, ?, ?, ?> reducer, Reducer<?, ?, ?, ?>.Context context, 
+			String methodName) {
+		try {
+			Method mthdr = getMapreduceClass(jobConfiguration.getProperty(REDUCER_CLASS))
+					.getDeclaredMethod(methodName, Reducer.Context.class);
+			log.fine("Invoking reducers " + methodName + "  method");
+			mthdr.setAccessible(true);
+			mthdr.invoke(reducer, context);
+		}
+		catch (Exception e) {
+			log.severe("Failed to invoke method " + methodName + " on reduce class " + reducer 
+					+ ". Reason " + e.getMessage());
+			log.severe("Stacktrace " + Utilities.printStackTrace(e));
+		}
 	}
 
 	private String downloadKeyFiles(String key) {
