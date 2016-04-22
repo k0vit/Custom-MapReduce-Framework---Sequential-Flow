@@ -18,7 +18,6 @@ import static org.apache.hadoop.Constants.FileConfig.OP_OF_MAP;
 import static org.apache.hadoop.Constants.FileConfig.OP_OF_REDUCE;
 import static org.apache.hadoop.Constants.FileConfig.S3_PATH_SEP;
 import static org.apache.hadoop.Constants.FileConfig.TASK_SPLITTER;
-import static org.apache.hadoop.Constants.JobConf.INPUT_PATH;
 import static org.apache.hadoop.Constants.JobConf.JOB_NAME;
 import static org.apache.hadoop.Constants.JobConf.MAPPER_CLASS;
 import static org.apache.hadoop.Constants.JobConf.MAP_OUTPUT_KEY_CLASS;
@@ -27,6 +26,7 @@ import static org.apache.hadoop.Constants.JobConf.REDUCER_CLASS;
 import static org.apache.hadoop.Constants.MapReduce.MAP_METHD_NAME;
 import static org.apache.hadoop.Constants.MapReduce.NOKEY;
 import static org.apache.hadoop.Constants.MapReduce.REDUCE_METHD_NAME;
+import static org.apache.hadoop.Constants.MapReduce.START_MAPPER;
 import static spark.Spark.post;
 
 import java.io.BufferedReader;
@@ -36,9 +36,12 @@ import java.io.FileReader;
 import java.io.InputStreamReader;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Properties;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Logger;
 import java.util.zip.GZIPInputStream;
 
@@ -147,10 +150,13 @@ class SlaveJob implements Runnable {
 	private S3Wrapper s3wrapper;
 	private Properties jobConfiguration;
 	private static String masterIp;
-	private static String filesToProcess;
+	private static List<MapTask> maptasks = Collections.synchronizedList(new ArrayList<>(3));
 	private static String keysToProcess;
-	private int totalTaskCount;
-	private int currentTaskCount;
+	private int totalTasksFileCount;
+	private int currentTasksFileCount;
+	private static boolean startMap = false;
+	private static int totalMapTasksCount = 0;
+	private static AtomicInteger currentMapTasksCount = new AtomicInteger(0);
 
 	@Override
 	public void run() {
@@ -164,14 +170,19 @@ class SlaveJob implements Runnable {
 		readFiles();
 		setup();
 		cleanup(true);
-		processFiles();
+
+		for(MapTask task: maptasks) {
+			log.info("Handlig map task " + task.toString());
+			processFiles(task);
+			totalTasksFileCount = 0;
+			currentTasksFileCount = 0;
+		}
+
 		log.info("All files processed, signalling end of mapper phase");
 		if (masterIp == null) {
 			masterIp = Utilities.getMasterIp(Utilities.readInstanceDetails());
 		}
 		NodeCommWrapper.sendData(masterIp, EOM_URL);
-		totalTaskCount = 0;
-		currentTaskCount = 0;
 	}
 
 	private void readFiles() {
@@ -179,14 +190,27 @@ class SlaveJob implements Runnable {
 		post(FILE_URL, (request, response) -> {
 			log.info("Current thread " + Thread.currentThread().getName());
 			masterIp = request.ip();
-			filesToProcess = request.body();
+			String reqBody = request.body();
+			if (reqBody.startsWith(START_MAPPER)) {
+				log.info("Received start mapper signal " + reqBody);
+				startMap = true;
+				totalMapTasksCount = Integer.valueOf(reqBody.replace(START_MAPPER, ""));
+				log.info("total number of mappers " + totalMapTasksCount);
+			}
+			else {
+				currentMapTasksCount.incrementAndGet();
+				MapTask task = new MapTask(reqBody); 
+				maptasks.add(task);
+				log.info("Received map tasks " + task.toString());
+				log.info("Current Map task received " + currentMapTasksCount.get());
+			}
 			log.info("Recieved request on " + FILE_URL + " from " + masterIp);
 			response.status(OK);
 			response.body(SUCCESS);
 			return response.body().toString();
 		});		
 
-		while (filesToProcess == null) {
+		while (! (startMap && currentMapTasksCount.get() == totalMapTasksCount)) {
 			log.info("Waiting for files from master");
 			try {
 				Thread.sleep(10000);
@@ -195,7 +219,7 @@ class SlaveJob implements Runnable {
 			}
 		}
 
-		log.info("Files to process by mapper " + filesToProcess);
+		log.info("All Map tasks received " + currentTasksFileCount);
 		//stop();
 	}
 
@@ -235,24 +259,23 @@ class SlaveJob implements Runnable {
 	 * ---- delete the file
 	 */
 	@SuppressWarnings("rawtypes")
-	private void processFiles() {
+	private void processFiles(MapTask task) {
 		Utilities.createDirs(IP_OF_MAP, OP_OF_MAP);
-		String files[] = filesToProcess.split(TASK_SPLITTER);
-		Mapper<?,?,?,?> mapper = instantiateMapper();
+		Mapper<?,?,?,?> mapper = instantiateMapper(task.mapperClassName);
 		Context context = mapper.new Context();
-		totalTaskCount = files.length;
-		for (String file: files) {
-			log.info("Processing file " + ++currentTaskCount + " out of " + totalTaskCount);
-			String localFilePath = downloadFile(file);
+		totalTasksFileCount = task.filesToProcess.size();
+		for (String file: task.filesToProcess) {
+			log.info("Processing file " + ++currentTasksFileCount + " out of " + totalTasksFileCount);
+			String localFilePath = downloadFile(file, task.inputPath);
 			processFile(localFilePath, mapper, context);
 			context.close();
 			new File(localFilePath).delete();
 		}
 	}
 
-	private String downloadFile(String file) {
+	private String downloadFile(String file, String inputPath) {
 
-		String s3FilePath = jobConfiguration.getProperty(INPUT_PATH) + S3_PATH_SEP + file;
+		String s3FilePath = inputPath + S3_PATH_SEP + file;
 		String localFilePath = IP_OF_MAP + File.separator + file;
 		return s3wrapper.readOutputFromS3(s3FilePath, localFilePath);
 	}
@@ -274,11 +297,11 @@ class SlaveJob implements Runnable {
 		}
 	}
 
-	private Mapper<?, ?, ?, ?> instantiateMapper() {
+	private Mapper<?, ?, ?, ?> instantiateMapper(String mapperClassName) {
 		log.fine("Instanting Mapper");
 		Mapper<?,?,?,?> mapper = null;
 		try {
-			Class<?> cls = getMapreduceClass(jobConfiguration.getProperty(MAPPER_CLASS));
+			Class<?> cls = getMapreduceClass(mapperClassName);
 			Constructor<?> ctor = cls.getDeclaredConstructor();
 			ctor.setAccessible(true);
 			mapper = (Mapper<?, ?, ?, ?>) ctor.newInstance();
@@ -333,7 +356,7 @@ class SlaveJob implements Runnable {
 			response.body("SUCCESS");
 			return response.body().toString();
 		});	
-		
+
 		while (keysToProcess == null) {
 			log.info("Waiting for keys from master");
 			try {
@@ -342,7 +365,7 @@ class SlaveJob implements Runnable {
 				log.severe("Sleep interrupted while waiting for keys from master");
 			}
 		}
-		
+
 		log.info("Keys to process " + keysToProcess);
 		//stop();
 	}
@@ -365,9 +388,9 @@ class SlaveJob implements Runnable {
 		String[] keys = keysToProcess.split(TASK_SPLITTER);
 		Reducer<?,?,?,?> reducer = getReducerInstance();
 		Reducer<?, ?, ?, ?>.Context context = reducer.new Context();
-		totalTaskCount = keys.length;
+		totalTasksFileCount = keys.length;
 		for (String key: keys) {
-			log.info("Processing file " + ++currentTaskCount + " out of " + totalTaskCount);
+			log.info("Processing file " + ++currentTasksFileCount + " out of " + totalTasksFileCount);
 			if (!key.equals(NOKEY)) {
 				log.fine("Processing key " + key);
 				String keyDirPath = downloadKeyFiles(key);
@@ -485,7 +508,7 @@ class SlaveJob implements Runnable {
 		log.info("Cleaning directories and shutting Transfermanager");
 		cleanup(false);
 		s3wrapper.shutDown();
-		filesToProcess = null;
+		maptasks.clear();
 		keysToProcess = null;
 	}
 
@@ -494,5 +517,32 @@ class SlaveJob implements Runnable {
 		Utilities.deleteFolder(new File(OP_OF_MAP));
 		Utilities.deleteFolder(new File(IP_OF_REDUCE));
 		Utilities.deleteFolder(new File(OP_OF_REDUCE));
+	}
+}
+
+class MapTask {
+	List<String> filesToProcess;
+	String mapperClassName;
+	String inputPath;
+	public MapTask(String taskData) {
+		String[] data = taskData.split(TASK_SPLITTER);
+		filesToProcess = new ArrayList<>(data.length);
+		for (int i=0;i<data.length;i++) {
+			if (i==data.length-1) {
+				mapperClassName = data[i];
+			}
+			else if (i==data.length-2) {
+				inputPath = data[i];
+			}
+			else {
+				filesToProcess.add(data[i]);
+			}
+		}
+	}
+	@Override
+	public String toString() {
+		return "MapTask [filesToProcess=" + filesToProcess
+				+ ", mapperClassName=" + mapperClassName + ", inputPath="
+				+ inputPath + "]";
 	}
 }
