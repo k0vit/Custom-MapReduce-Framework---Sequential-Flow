@@ -1,5 +1,7 @@
 package neu.edu.mr.mapreduce;
 
+import java.io.File;
+
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.services.s3.AmazonS3Client;
 
@@ -36,7 +38,7 @@ extends TestCase
 		S3Wrapper s = new S3Wrapper(new AmazonS3Client(new BasicAWSCredentials
 				("AKIAJF77SYNJS5ZLR2TA", "t+cWGKYOOplu1ib53CIFf7XgH56brRsZd3HKsl00")));
 
-		s.deleteDir("s3://kovit2/InputOfReducer");
+		s.uploadFilesToS3("s3://kovit2", new File("C:\\Users\\kovit\\Documents\\GitHub"));
 	}
 
 	/*public void testFileDistr() {

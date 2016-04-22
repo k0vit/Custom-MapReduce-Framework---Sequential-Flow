@@ -123,10 +123,17 @@ public class Mapper<KEYIN, VALUEIN, KEYOUT, VALUEOUT> {
 		public void close() {
 			log.info("Closing all the keys related to this file");
 			writeToFile();
+			uploadDirToS3();
 			keyValueStore = new HashMap<>();
-			s3wrapper.waitTillUploadCompletes();
+			//s3wrapper.waitTillUploadCompletes();
 			Utilities.deleteFolder(new File(OP_OF_MAP));
 		}	
+
+		private void uploadDirToS3() {
+			log.fine("uploading mapper output directory");
+			String bucket = clusterProperties.getProperty(BUCKET);
+			s3wrapper.uploadFilesToS3(bucket, new File(OP_OF_MAP));
+		}
 
 		private void writeToFile() {
 			String filePath = null;
@@ -158,7 +165,7 @@ public class Mapper<KEYIN, VALUEIN, KEYOUT, VALUEOUT> {
 					log.severe("Failed to write for key " + keyStr + "Reason " + e.getMessage());
 				}
 				
-				uploadToS3(keyStr);
+				//uploadToS3(keyStr);
 			}
 		}
 
