@@ -303,7 +303,7 @@ class SlaveJob implements Runnable {
 		} catch (Exception e) {
 			log.warning("Failed to invoke " + methdName + " on mapper class " + mapper 
 					+ ". Reason " + e.getMessage());
-			log.warning("Stacktrace " + Utilities.printStackTrace(e));
+			//log.warning("Stacktrace " + Utilities.printStackTrace(e));
 		}
 	}
 
@@ -477,7 +477,7 @@ class SlaveJob implements Runnable {
 		catch (Exception e) {
 			log.warning("Failed to invoke method " + methodName + " on reduce class " + reducer 
 					+ ". Reason " + e.getMessage());
-			log.warning("Stacktrace " + Utilities.printStackTrace(e));
+			//log.warning("Stacktrace " + Utilities.printStackTrace(e));
 		}
 	}
 

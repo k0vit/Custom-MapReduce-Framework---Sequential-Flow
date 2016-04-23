@@ -2,6 +2,15 @@ REQUIREMENTS:
 1. Makefile should be copied to the same directory too to make sure it runs perfectly.
 2. Edit the cluster.properties and user.properties for each assignment as instructed below.
 3. With each of our runs we create a security group, a key-pair each time and they get deleted as the run is terminated. Incase the run fails check and delete the security group and the key-pair manually or run make terminate that will do it.
+
+-------------------------------------------------------------------------------------------------------------------------------
+
+Note:
+For this project we have followed the same package naming convention as Hadoop Mapreduce framework so that in all the assignments we don’t need to change any piece of code.
+All the assignments will run as it is. 
+The only change is in the pom.xml where we need to remove the dependency for hadoop.
+Also while running the assignment specify our jar (final project) in the classpath. (This is done by outr ssh script)
+
 ---------------------------------------------------------------------------------------------------------------------------------------------
 RUNNING THE PROGRAM WITH MAKE FILE:
 make run
