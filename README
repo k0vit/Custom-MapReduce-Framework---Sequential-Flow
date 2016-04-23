@@ -11,6 +11,15 @@ All the assignments will run as it is.
 The only change is in the pom.xml where we need to remove the dependency for hadoop.
 Also while running the assignment specify our jar (final project) in the classpath. (This is done by outr ssh script)
 
+We have separate project for sequential and multi-threading implementation.
+Sequential works for Assignment 3, 4 and 6.
+Multithreading works for assignment 3 and 4.
+All the instructions remain the same for both the implementations.
+Most of the files are same. We didnt want any confusion so we upload 2 separate projects for 
+each of this implementation.
+
+The assignments we support are Kovit Nisar and Naineel Shah A3, A4 and A6 which was mailed by the name Nisar_Shah_A<3,4,6>
+
 ---------------------------------------------------------------------------------------------------------------------------------------------
 RUNNING THE PROGRAM WITH MAKE FILE:
 make run
