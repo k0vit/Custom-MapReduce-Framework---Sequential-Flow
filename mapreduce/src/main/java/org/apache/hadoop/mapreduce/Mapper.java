@@ -26,7 +26,16 @@ import com.amazonaws.services.s3.AmazonS3Client;
 
 import neu.edu.utilities.S3Wrapper;
 import neu.edu.utilities.Utilities;
-
+/**
+ * 
+ * @author kovit
+ * @author Naineel Shah
+ *
+ * @param <KEYIN>
+ * @param <VALUEIN>
+ * @param <KEYOUT>
+ * @param <VALUEOUT>
+ */
 public class Mapper<KEYIN, VALUEIN, KEYOUT, VALUEOUT> {
 
 	private static final Logger log = Logger.getLogger(Mapper.class.getName());
@@ -37,8 +46,10 @@ public class Mapper<KEYIN, VALUEIN, KEYOUT, VALUEOUT> {
 	 * ---- check if the key exist in the map maintained by the Context class [Map<String, FileWriter>]
 	 * ---- if the key is not present:
 	 * ------ create a dir called <key>_key_dir and create a file with <key>_timestamp_<slaveid> 
-	 * ------ open  FileWriter for that file and put in the map
-	 * ---- get the FileWriter from the map and write the record to it
+	 * ------ open  DataInputStream for that file and put in the map
+	 * ---- get the DataInputStream from the map and write the record to it
+	 * 
+	 * -- Once the file is processed i.e. on close upload all the files to s3
 	 * 
 	 * @author kovit
 	 *
@@ -90,12 +101,12 @@ public class Mapper<KEYIN, VALUEIN, KEYOUT, VALUEOUT> {
 		}
 
 		public void close() {
-			closeAllFileWriter();
+			closeAllDataInputStream();
 			uploadToS3();
 			keyToFile.clear();
 		}
 
-		private void closeAllFileWriter() {
+		private void closeAllDataInputStream() {
 			log.fine("Closing all the BufferedWriter " + keyToFile.size());
 			for(String key: keyToFile.keySet()) {
 				DataOutputStream dos = keyToFile.get(key);

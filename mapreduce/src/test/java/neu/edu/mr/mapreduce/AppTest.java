@@ -36,6 +36,7 @@ extends TestCase
 		S3Wrapper s = new S3Wrapper(new AmazonS3Client(new BasicAWSCredentials
 				("AKIAJF77SYNJS5ZLR2TA", "t+cWGKYOOplu1ib53CIFf7XgH56brRsZd3HKsl00")));
 
+		System.out.println(s.getListOfObjects("s3://kovit3/outputa7/OutputOfJob1"));
 	}
 
 	/*public void testFileDistr() {
