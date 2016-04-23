@@ -1,44 +1,108 @@
 REQUIREMENTS:
 1. Makefile should be copied to the same directory too to make sure it runs perfectly.
-2. Edit the cluster.properties file as instructed below.
-3. With each of our runs we create a security group, a key-pair each time and they get deleted as the run is terminated. Incase the run fails check and delete the group and the key-pair manually or run make terminate.
+2. Edit the cluster.properties and user.properties for each assignment as instructed below.
+3. With each of our runs we create a security group, a key-pair each time and they get deleted as the run is terminated. Incase the run fails check and delete the security group and the key-pair manually or run make terminate that will do it.
 ---------------------------------------------------------------------------------------------------------------------------------------------
-RUNNING PROGRAM WITH MAKE FILE:
-make dist_sort INPUT_PATH=<S3 Input Dir> OUTPUT_PATH=<S3 Output Dir>
+RUNNING THE PROGRAM WITH MAKE FILE:
+make run
 
-For e.g:
-make dist_sort INPUT_PATH=s3://cs6240sp16/climate OUTPUT_PATH=s3://naineel/outputa9 
-
-where:
-INPUT_PATH is the s3 dir location of history files in aws.
-OUTPUT_PATH is the dir location in aws s3 where all the output files will be for cloud run.
 ---------------------------------------------------------------------------------------------------------------------------------------------
 Terminating the cluster:
 make terminate 
 
 Above command will terminate the ec2 instances, delete the Key-pair and security group.
-Don't worry about this showing in your console:
-OUTPUT_PATH: command not found.
+
 ---------------------------------------------------------------------------------------------------------------------------------------------
 Cluster.properties:
 
 1. Add your AccessKey and SecretKey as shown after the = with no space.
-2. Don't change the base image.
-3. Keep the instance type you want as r3.xlarge, r3.2xlarge, m3.xlarge etc.
-4. InstanceNumber should be the number of instances you want to bring up. This number is essentially the number of slave machines only we add one more instance for the master node.
+2. Don't change the base image. (base image has java8)
+3. Keep the instance type you want as m3.xlarge c4.xlarge etc.
+4. InstanceNumber should be the number of instances you want to bring up. This number is essentially the number of slave machines ONLY we add one more instance for the master node.
 5. Add the Bucket name as the base bucket of the OUTPUT_PATH so it will be s3://naineel in the above case.
 
 ---------------------------------------------------------------------------------------------------------------------------------------------
 
 OUTPUT:
-The output is finally generated in the S3 output path which is given as argument to the Makefile as OUTPUT_PATH.
-It will create part-r-<0-Number>.csv where Number is the total slave machines - 1.
+The output is finally generated in the S3 output path which is given as part of the Arguments in the user.properties file.
+It will create part-r-Number depending on the number of slave machines.
  ---------------------------------------------------------------------------------------------------------------------------------------------
 
 LOGGING:
 We are logging our progress to the project folder. It will create separate files for each sortnode as sortnode-<ip-address>.txt by which you can follow the progress.
 
-The master which is the client will also have its own log as client-output.txt where we can follow the clients progress. ---------------------------------------------------------------------------------------------------------------------------------------------
+The master which is the client will also have its own log as master-masterIp.txt where we can follow the clients progress. ---------------------------------------------------------------------------------------------------------------------------------------------
+
+Note: there should be no spaces before and after = (equalto) sign
+user.properties file for each assignment:
+
+
+Assignment 3(For mean)
+**Note** - output path should be your s3 bucket path. 
+----START OF FILE----
+#Put all the user jar properties here
+
+# local jar path
+# /home/user/Myjar.jar
+Jar=assignment3.jar
+​
+# all the arguments separated by space with no double quotes
+Arguments=-h s3://kovit/input2 s3://kovit/outputf mean
+​
+# main class 
+# neu.edu.mr.Main
+Main=neu.edu.mr.hadoop.AirlineDataProcessorMain
+
+---- END OF FILE----
+
+For median just change:
+Arguments=-h s3://kovit/input2 s3://kovit/outputf median
+
+For fast Median just change:
+Arguments=-h s3://kovit/input2 s3://kovit/outputf fastMedian
+
+
+Assignment 4(time=200)
+**Note** - output path should be your s3 bucket path. 
+----START OF FILE----
+#Put all the user jar properties here
+​
+# local jar path
+# /home/user/Myjar.jar
+Jar=assignment4.jar
+​
+# all the arguments separated by space with no double quotes
+# for e.g. -time=${TIME} $(INPUT_PATH) $(OUTPUT_PATH)
+Arguments=-time=200 s3://mrclassvitek/data s3://naineel/outputa4 AWS-ACCESS-KEY AWS-SECRET-KEY
+​
+# main class 
+# neu.edu.mr.Main
+Main=neu.edu.mr.nisar_kovit_a4.AirlineDataProcessorMain
+
+---- END OF FILE----
+For time=1 change:
+Arguments=-time=1 s3://mrclassvitek/data s3://naineel/outputa4 AWS-ACCESS-KEY AWS-SECRET-KEY
+​
+Assignment 6
+**Note** - output path should be your s3 bucket path. 
+----START OF FILE----
+#Put all the user jar properties here
+​
+# local jar path
+# /home/user/Myjar.jar
+Jar=assignment6.jar
+​
+# all the arguments separated by space with no double quotes
+# for e.g. $(HISTORY_INPUT_PATH) $(TEST_INPUT_PATH) $(OUTPUT_PATH)
+Arguments=s3://mrclassvitek/a6history s3://mrclassvitek/a6test s3://aSix/output
+​
+# main class 
+# neu.edu.mr.Main
+Main=neu.edu.mr.nisar_kovit_a4.AirlineDataProcessorMain
+
+---- END OF FILE----
+
+---------------------------------------------------------------------------------------------------------------------------------------------
 STEPS TO TAKE INCASE OF ERRORS:
 
 If you see something like this:
@@ -49,7 +113,7 @@ lost connection
 Hit Ctrl + C. Wait for 10 seconds and manually run 
 ./scpTo.sh
 
-This Step is successful if it shows the following output:
+This Step is successful if it shows something similar to the following output:
 Warning: Permanently added '52.90.113.222' (ECDSA) to the list of known hosts.
 client-0.0.1-SNAPSHOT-jar-with-dependencies.jar                                                                                                        100%   37MB   1.5MB/s   00:25    
 Warning: Permanently added '52.87.203.115' (ECDSA) to the list of known hosts.
@@ -62,12 +126,11 @@ Warning: Permanently added '54.152.54.67' (ECDSA) to the list of known hosts.
 SortNode-0.0.1-SNAPSHOT-jar-with-dependencies.jar                               
 
 Then you will have to run the ./sshToRun script manually if above step fails as:
-./sshToRun.sh s3://cs6240sp16/climate s3://naineel/outputa9
+./sshToRun.sh
 
 which will give an output like this:
-<AWS ACCESS KEY>
-<AWS SECRET KEY>
-s3://naineel/InstanceDetails.csv
+(The arguments you give in the user.properties)
+(The main class you give in user.properties)
 Warning: Permanently added '54.152.120.0' (ECDSA) to the list of known hosts.
 Warning: Permanently added '54.165.203.81' (ECDSA) to the list of known hosts.
 Warning: Permanently added '52.207.221.32' (ECDSA) to the list of known hosts.
