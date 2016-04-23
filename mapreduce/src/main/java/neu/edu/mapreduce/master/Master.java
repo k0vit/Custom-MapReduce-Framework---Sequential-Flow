@@ -73,7 +73,7 @@ import neu.edu.utilities.Utilities;
  * For each input sends the share to slaves on /files along with input path and mapper class name 
  * appended at the end.
  * 
- * And finally send START_<no of files>
+ * And finally send START_<no of multiple inputs>
  * 
  * 4)
  * listen to /EOM meaning end of mapper
@@ -105,35 +105,8 @@ public class Master {
 	}
 
 	/**
-	 * Master working:-
 	 * 
-	 * 1) 
-	 * Read instancedetails.csv and cluster.properties
-	 * Read job configuration 
-	 * Upload configuration file to s3 at Bucket\Configuration.properties
-	 * 
-	 * 2) 
-	 * "/start" - for a new job (supporting multiple jobs)
-	 * 
-	 * 3) 
-	 * Get the Input path and read the files and divide by #slaves or file size
-	 * send the files on /files
-	 * 
-	 * 4)
-	 * listen to /EOM meaning end of mapper
-	 *  
-	 * 5)
-	 * check if all mapper are done
-	 * once all mapper are done download keys from s3
-	 * divide keys by #slaves or key file size
-	 * send keys on /keys to mapper
-	 * 
-	 * 6)
-	 * listen to /EOR mean end of reducer
-	 * once all reducer are done return true
-	 * 
-	 * @return 
-	 * 		true if job completed successfully else false
+	 * @return
 	 */
 	public boolean submit() {
 		setup();
@@ -195,6 +168,12 @@ public class Master {
 		}
 	}
 
+	/**
+	 * Sends the task to mapper. 
+	 * 
+	 * @param inputPath
+	 * @param mapperClassName
+	 */
 	private void singleInputHandler(String inputPath, String mapperClassName) {
 		log.info("SingleInputHandler called with " + inputPath + " and " + mapperClassName);
 		List<S3File> s3Files = s3wrapper.getListOfObjects(inputPath);
@@ -324,6 +303,12 @@ public class Master {
 	}
 }
 
+/**
+ * This class represents slave node and its task (files or keys to process)
+ * 
+ * @author kovit
+ *
+ */
 class NodeToTask implements Comparable<NodeToTask>{
 	private Node node;
 	private Long totalSize = new Long(0);

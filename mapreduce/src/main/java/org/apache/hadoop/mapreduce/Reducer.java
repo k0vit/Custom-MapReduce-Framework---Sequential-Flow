@@ -24,6 +24,7 @@ import neu.edu.utilities.Utilities;
 /**
  *  Context.write of Reducer [contex.write(key, value)]
  * -- for each call write the record using the filewriter
+ * -- once the key is processed upload to s3
  * 
  * @author kovit
  *

@@ -70,8 +70,7 @@ import neu.edu.utilities.Utilities;
  * 
  * 3) 
  * listen to /file to start the mapper task
- * stop the server
- *  
+ * if multiple inputs, then wait for all the mapper task 
  * 4)
  * Create a folder called OutputOfMap 
  * for each file 
@@ -113,9 +112,8 @@ import neu.edu.utilities.Utilities;
  * ---- check if the key exist in the map maintained by the Context class [Map<String, FileWriter>]
  * ---- if the key is not present:
  * ------ create a dir called <key>_key_dir and create a file with <key>_timestamp_<slaveid> 
- * ------ open  FileWriter for that file and put in the map
- * ---- get the FileWriter from the map and write the record to it
- * 
+ * ------ open  DataInputStream for that file and put in the map
+ * ---- get the DataInputStream from the map and write the record to it
  * 
  * 
  * Context.write of Reducer [contex.write(key, value)]
@@ -187,6 +185,9 @@ class SlaveJob implements Runnable {
 		NodeCommWrapper.sendData(masterIp, EOM_URL);
 	}
 
+	/**
+	 * Listen for the task from the master
+	 */
 	private void readFiles() {
 		log.info("Listening on " + FILE_URL + " for files from master");
 		post(FILE_URL, (request, response) -> {
@@ -282,6 +283,14 @@ class SlaveJob implements Runnable {
 		}
 	}
 
+	/**
+	 * Call the "map" method in the mapper
+	 * 
+	 * @param mapper
+	 * @param context
+	 * @param mapperClassName
+	 * @param methdName
+	 */
 	@SuppressWarnings("rawtypes")
 	private void callMapMthd(Mapper<?, ?, ?, ?> mapper, Mapper.Context context, String mapperClassName, String methdName) {
 		try {
@@ -297,12 +306,20 @@ class SlaveJob implements Runnable {
 	}
 
 	private String downloadFile(String file, String inputPath) {
-
 		String s3FilePath = inputPath + S3_PATH_SEP + file;
 		String localFilePath = IP_OF_MAP + File.separator + file;
 		return s3wrapper.readOutputFromS3(s3FilePath, localFilePath);
 	}
 
+	/**
+	 * Process each file. 
+	 * Read all the lines and call map method for each line
+	 * 
+	 * @param file
+	 * @param mapper
+	 * @param context
+	 * @param mapperClassName
+	 */
 	@SuppressWarnings("rawtypes")
 	private void processFile(String file, Mapper<?, ?, ?, ?> mapper, Context context, String mapperClassName) {
 		log.info("Processing file " + file);
@@ -338,6 +355,15 @@ class SlaveJob implements Runnable {
 		return mapper;
 	}
 
+	/**
+	 * For each line call the map method
+	 * 
+	 * @param line
+	 * @param mapper
+	 * @param context
+	 * @param counter
+	 * @param mapperClassName
+	 */
 	@SuppressWarnings("rawtypes")
 	private void processLine(String line, Mapper<?, ?, ?, ?> mapper, Context context, long counter, String mapperClassName) {
 		try {
@@ -357,6 +383,9 @@ class SlaveJob implements Runnable {
 		}
 	}
 
+	/**
+	 * Start of reduce phase
+	 */
 	private void reduce() {
 		log.info("Starting reduce task");
 		try {
@@ -373,6 +402,9 @@ class SlaveJob implements Runnable {
 		}
 	}
 
+	/**
+	 * Listen for the keys from the mapper
+	 */
 	private void readKeys() {
 		log.info("Listening on " + KEY_URL);
 		post(KEY_URL, (request, response) -> {
@@ -524,6 +556,12 @@ class SlaveJob implements Runnable {
 		}
 	}
 
+	/**
+	 * Read all the line from the file and creates an iterable as an input to reduce method
+	 * @param keyDirPath
+	 * @param key
+	 * @return
+	 */
 	@SuppressWarnings("rawtypes")
 	private ObjectIterable getIterableValue(String keyDirPath, String key) {
 		log.info("Creating iterator for key " + key + " by reading all the file records from " + keyDirPath);
