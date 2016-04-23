@@ -7,6 +7,12 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Logger;
 
+/**
+ * This Class represents job configuration
+ * 
+ * @author kovit
+ *
+ */
 public class Configuration {
 
 	private static final Logger log = Logger.getLogger(Configuration.class.getName());

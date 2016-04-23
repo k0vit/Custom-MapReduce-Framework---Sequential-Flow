@@ -7,6 +7,12 @@ import static org.apache.hadoop.Constants.JobConf.MULTIPLE_INPUT_SEP;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapreduce.Job;
 
+/**
+ * Supporting multiple input as in hadoop
+ * 
+ * @author kovit
+ *
+ */
 public class MultipleInputs {
 
 	public static void addInputPath(Job job, Path inputPath, Class<?> inputFormatClass, Class<?> mapperClass) {

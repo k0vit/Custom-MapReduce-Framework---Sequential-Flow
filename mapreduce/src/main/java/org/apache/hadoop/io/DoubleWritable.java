@@ -4,6 +4,12 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 
+/**
+ * Represents double primitive type
+ * @author kovit
+ *
+ */
+@SuppressWarnings("serial")
 public class DoubleWritable implements Writable{
 
 	private double value;

@@ -18,6 +18,12 @@ import org.apache.hadoop.io.Text;
 
 import neu.edu.mapreduce.master.Master;
 
+/**
+ * Represents single job
+ * 
+ * @author kovit
+ *
+ */
 public class Job {
 
 	private Configuration conf;

@@ -4,6 +4,12 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 
+/**
+ * Represents long primitive type
+ * @author kovit
+ *
+ */
+@SuppressWarnings("serial")
 public class LongWritable implements Writable{
 
 	private long value;

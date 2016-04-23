@@ -12,6 +12,12 @@ import org.apache.hadoop.io.IntWritable;
 
 import neu.edu.utilities.Utilities;
 
+/**
+ * Base context file shared between mapper and reducer
+ * 
+ * @author kovit
+ *
+ */
 public class BaseContext<KEYIN,VALUEIN,KEYOUT,VALUEOUT> implements IContext<KEYIN,VALUEIN,KEYOUT,VALUEOUT> {
 	
 	private static final Logger log = Logger.getLogger(BaseContext.class.getName());
@@ -24,6 +30,13 @@ public class BaseContext<KEYIN,VALUEIN,KEYOUT,VALUEOUT> implements IContext<KEYI
 		log.info("Base Context " + key + " " + value);
 	}
 	
+	/**
+	 * Supports counter as in hadoop
+	 * 
+	 * @param group
+	 * @param counterName
+	 * @return
+	 */
 	public IntWritable getCounter(String group, String counterName) {
 		if (counter.containsKey(group)) {
 			if (counter.get(group).containsKey(counterName)) {
@@ -43,6 +56,11 @@ public class BaseContext<KEYIN,VALUEIN,KEYOUT,VALUEOUT> implements IContext<KEYI
 		}
 	}
 	
+	/**
+	 * user defined configuration and job configuration
+	 * 
+	 * @return
+	 */
 	public Configuration getConfiguration() {
 		if (config == null) {
 			config = new Configuration();

@@ -5,6 +5,11 @@ import static org.apache.hadoop.Constants.JobConf.INPUT_PATH;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapreduce.Job;
 
+/**
+ * 
+ * @author kovit
+ *
+ */
 public class FileInputFormat {
 	
 	public static void addInputPath(Job job, Path inputPath) {

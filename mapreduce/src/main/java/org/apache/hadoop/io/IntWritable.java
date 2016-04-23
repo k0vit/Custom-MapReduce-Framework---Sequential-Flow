@@ -4,6 +4,12 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 
+/**
+ * Represents int primitive type
+ * @author kovit
+ *
+ */
+@SuppressWarnings("serial")
 public class IntWritable implements Writable{
 
 	private int value;

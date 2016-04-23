@@ -4,6 +4,13 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 
+/**
+ * Represents boolean primitive type
+ * 
+ * @author kovit
+ *
+ */
+@SuppressWarnings("serial")
 public class BooleanWritable implements Writable {
 
 	private boolean value;
