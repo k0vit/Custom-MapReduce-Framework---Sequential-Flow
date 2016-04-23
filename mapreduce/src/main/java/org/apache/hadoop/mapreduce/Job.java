@@ -7,6 +7,7 @@ import static org.apache.hadoop.Constants.JobConf.MAPPER_INPUT_KEY_CLASS;
 import static org.apache.hadoop.Constants.JobConf.MAPPER_INPUT_VALUE_CLASS;
 import static org.apache.hadoop.Constants.JobConf.MAP_OUTPUT_KEY_CLASS;
 import static org.apache.hadoop.Constants.JobConf.MAP_OUTPUT_VALUE_CLASS;
+import static org.apache.hadoop.Constants.JobConf.MULTIPLE_INPUT;
 import static org.apache.hadoop.Constants.JobConf.NUM_REDUCER;
 import static org.apache.hadoop.Constants.JobConf.OUTPUT_KEY_CLASS;
 import static org.apache.hadoop.Constants.JobConf.OUTPUT_VALUE_CLASS;
@@ -41,6 +42,7 @@ public class Job {
 		conf.set(MAP_OUTPUT_VALUE_CLASS, Text.class.getName());
 		conf.set(MAPPER_INPUT_KEY_CLASS, LongWritable.class.getName());
 		conf.set(MAPPER_INPUT_VALUE_CLASS, Text.class.getName());
+		conf.set(MULTIPLE_INPUT, "");
 		return job;
 	}
 	

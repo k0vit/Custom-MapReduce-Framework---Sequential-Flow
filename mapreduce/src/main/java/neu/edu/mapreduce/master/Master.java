@@ -46,6 +46,49 @@ import neu.edu.utilities.S3File;
 import neu.edu.utilities.S3Wrapper;
 import neu.edu.utilities.Utilities;
 
+/**
+ * Represents Hadoop Master
+ * 
+ * @author kovit
+ * @author dipti samant
+ * @author naineel shah
+ * 
+ * 
+ * 	/**
+ * Master working:-
+ * 
+ * 1) 
+ * Read instancedetails.csv and cluster.properties
+ * Read job configuration 
+ * Upload configuration file to s3 at Bucket\Configuration.properties
+ * 
+ * 2) 
+ * "/start" - for a new job (supporting multiple jobs)
+ * 
+ * 3) 
+ * Get the Input path and get the list of files and divide by #slaves or file size
+ * send the files on /files (supports multiple inputs also)
+ * 
+ * In case of multiple inputs for each input gets the list of files and divides across slave.
+ * For each input sends the share to slaves on /files along with input path and mapper class name 
+ * appended at the end.
+ * 
+ * And finally send START_<no of files>
+ * 
+ * 4)
+ * listen to /EOM meaning end of mapper
+ *  
+ * 5)
+ * check if all mapper are done
+ * once all mapper are done download keys from s3
+ * divide keys by #slaves or key file size
+ * send keys on /keys to mapper
+ * 
+ * 6)
+ * listen to /EOR mean end of reducer
+ * once all reducer are done return true
+ * 
+ */
 public class Master {
 
 	private static final Logger log = Logger.getLogger(Master.class.getName());
