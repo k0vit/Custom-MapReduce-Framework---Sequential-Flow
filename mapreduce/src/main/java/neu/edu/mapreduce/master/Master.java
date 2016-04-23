@@ -116,6 +116,7 @@ public class Master {
 		sendKeysToReducer();
 		listenToEndOfMapReduce(EOR_URL, "Reducer");
 		s3wrapper.deleteDir(clusterProperties.getProperty(BUCKET) + S3_PATH_SEP + IP_OF_REDUCE);
+		log.info("JOB " + job.getJobName() + " HAS COMPLETED SUCCESSFULLY");
 		return true;
 	}
 
