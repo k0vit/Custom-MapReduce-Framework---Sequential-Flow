@@ -213,7 +213,7 @@ public class Master {
 	private void sendFilesToMapper() {
 		int taskCount = 0;
 		String multipleInput = job.getConfiguration().get(MULTIPLE_INPUT);
-		if (multipleInput != null) {
+		if (multipleInput != null && !multipleInput.isEmpty()) {
 			log.info("Multiple input found");
 			String[] inputs = multipleInput.split(MULTIPLE_INPUT_SEP);
 			for (String input: inputs) {
