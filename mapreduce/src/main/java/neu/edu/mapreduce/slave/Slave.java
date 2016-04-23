@@ -120,6 +120,8 @@ import neu.edu.utilities.Utilities;
  * -- for each call write the record using the filewriter
  *  
  * @author kovit
+ * @author Naineel shah
+ * @author Yuanjian Lai
  *
  */
 public class Slave {

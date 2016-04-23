@@ -26,7 +26,16 @@ import com.amazonaws.services.s3.AmazonS3Client;
 
 import neu.edu.utilities.S3Wrapper;
 import neu.edu.utilities.Utilities;
-
+/**
+ * 
+ * @author kovit
+ * @author Naineel Shah
+ *
+ * @param <KEYIN>
+ * @param <VALUEIN>
+ * @param <KEYOUT>
+ * @param <VALUEOUT>
+ */
 public class Mapper<KEYIN, VALUEIN, KEYOUT, VALUEOUT> {
 
 	private static final Logger log = Logger.getLogger(Mapper.class.getName());
