@@ -4,6 +4,12 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 
+/**
+ * Represents String primitive type
+ * @author kovit
+ *
+ */
+@SuppressWarnings("serial")
 public class Text implements Writable{
 
 	private String value;

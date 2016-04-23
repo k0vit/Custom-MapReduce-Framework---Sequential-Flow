@@ -4,6 +4,12 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 
+/**
+ * Represents float primitive type
+ * @author kovit
+ *
+ */
+@SuppressWarnings("serial")
 public class FloatWritable implements Writable{
 
 	private float value;

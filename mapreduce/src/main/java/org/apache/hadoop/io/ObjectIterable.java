@@ -12,6 +12,13 @@ import java.util.logging.Logger;
 
 import neu.edu.utilities.Utilities;
 
+/**
+ * Iterable which is passed to reducer.
+ * 
+ * @author kovit
+ *
+ * @param <T>
+ */
 public class ObjectIterable <T extends Writable> implements Iterable<T> , Iterator<T>{
 
 	private static final Logger log = Logger.getLogger(ObjectIterable.class.getName());
@@ -29,7 +36,11 @@ public class ObjectIterable <T extends Writable> implements Iterable<T> , Iterat
 		keyFiles = files;
 		initalizeDIS();
 	}
-
+	
+	/**
+	 * Instantiate VALUEOUT class
+	 * @param className
+	 */
 	@SuppressWarnings("unchecked")
 	private void instantiateData(String className) {
 		try {
@@ -44,6 +55,10 @@ public class ObjectIterable <T extends Writable> implements Iterable<T> , Iterat
 		}
 	}
 
+	/**
+	 * configure data input stream
+	 * @return
+	 */
 	private boolean initalizeDIS() {
 		try {
 			while(!keyFiles[currentFile].getName().startsWith(key)) {
@@ -85,6 +100,12 @@ public class ObjectIterable <T extends Writable> implements Iterable<T> , Iterat
 		}
 	}
 
+	/**
+	 * Handles end of file
+	 * There can be multiple file associated with each key.
+	 * So this method will return true only when all the file is processed.
+	 * @return
+	 */
 	private boolean handleEOF() {
 		try {
 			dis.close();
