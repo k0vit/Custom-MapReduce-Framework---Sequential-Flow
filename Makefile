@@ -4,7 +4,6 @@ run:
 	rm -rf slave-*.txt
 	rm -rf master-*.txt
 	rm -rf cluster_manager*.txt
-	#rm -rf *.jar
 	cd clustermanager && exec mvn clean install -DskipTests
 	cp clustermanager/target/cluster_manager-0.0.1-SNAPSHOT-jar-with-dependencies.jar .
 	cd mapreduce && exec mvn clean install -DskipTests
