@@ -98,8 +98,7 @@ Arguments=s3://mrclassvitek/a6history s3://mrclassvitek/a6test s3://aSix/output
 ​
 # main class 
 # neu.edu.mr.Main
-Main=neu.edu.mr.nisar_kovit_a4.AirlineDataProcessorMain
-
+Main=neu.edu.mr.nisar_kovit_a6.AirlineDataProcessorMain
 ---- END OF FILE----
 
 ---------------------------------------------------------------------------------------------------------------------------------------------
